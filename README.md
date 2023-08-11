@@ -1,8 +1,10 @@
-# JAX Spherical CNN library
+# JAX Spherical CNN Library
 
-## Coming soon!
+## IN PROGRESS!
 
-The previous version of the codebase is available [here](https://github.com/google-research/google-research/tree/master/spin_spherical_cnns). Updated version is coming soon!
+This repository is being actively updated. We are working on merging the
+previous implementation with the contributions of our ICML 2023 paper "[Scaling
+Spherical CNNs](https://arxiv.org/pdf/2306.05420.pdf)".  Stay tuned!
 
 [![Unittests](https://github.com/google-research/spherical-cnn/actions/workflows/pytest_and_autopublish.yml/badge.svg)](https://github.com/google-research/spherical-cnn/actions/workflows/pytest_and_autopublish.yml)
 

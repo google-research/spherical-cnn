@@ -15,7 +15,17 @@ keywords = []
 
 # pip dependencies of the project
 # Installed locally with `pip install -e .`
-dependencies = []
+dependencies = [
+    "clu==0.0.9",
+    "dill==0.3.7",
+    "einshape==1.0",
+    "importlib-resources==6.0.1",
+    "spherical==1.0.13",
+    "sympy==1.12",
+    "tensorflow==2.13.0",
+    "tensorflow-datasets==4.9.2",
+    "zipp==3.16.2",
+]
 
 # `version` is automatically set by flit to use `spherical_cnn.__version__`
 dynamic = ["version"]
