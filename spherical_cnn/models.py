@@ -385,6 +385,9 @@ class CNNClassifier(nn.Module):
     Raises:
       ValueError: If resolutions cannot be enforced with 2x2 pooling.
     """
+    # `train.py` assumes this field exist.
+    self.variable('constants', 'dummy', lambda: 1.0)
+
     num_layers = len(self.resolutions)
     # Merge spin and channel dimensions.
     features = inputs.reshape((*inputs.shape[:3], -1))
