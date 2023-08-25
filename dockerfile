@@ -1,0 +1,29 @@
+FROM gcr.io/deeplearning-platform-release/base-cpu.py310
+
+# Below command creates home dir for 1000 UID user if it is not present.
+RUN if ! id 1000; then useradd -m -u 1000 clouduser; fi
+
+RUN mkdir /workdir
+WORKDIR /workdir
+
+ENV LANG=C.UTF-8
+ENV TFDS_DATA_DIR=/workdir/tensorflow_datasets
+# apt-get update may cause errors; skip.
+# RUN apt-get update
+RUN apt-get install -y git python3 python3-pip netcat
+RUN python3 -m pip install --upgrade pip
+COPY ./ /workdir/
+
+RUN python3 -m pip --no-cache-dir install .[dev]
+
+RUN python3 -m pip install --upgrade "jax[cuda11_pip]==0.4.14" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+# Below command make 1000 UID and root user as owners of the workdir.
+RUN chown -R 1000:root /workdir && chmod -R 775 /workdir
+
+# Build dataset as user.
+USER 1000
+RUN cd /workdir/spherical_cnn/spherical_mnist && tfds build && cd -
+
+# Run training job.
+ENTRYPOINT ["python3", "-m", "spherical_cnn.main"]
