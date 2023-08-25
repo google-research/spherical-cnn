@@ -14,6 +14,7 @@
 
 """Default config for training Spin-Weighted Spherical CNNs."""
 
+from collections import abc
 import ml_collections
 
 
