@@ -370,7 +370,10 @@ class SpinSphericalFourierTransformer(nn.Module):
                                    for spin in spins], axis=-1)
 
     return jnp.einsum("lms,lnm,lns,nms...->lms...",
-                      forward_constants, deltas, deltas_s, Inm)
+                      forward_constants,
+                      deltas.astype(jnp.complex64),
+                      deltas_s.astype(jnp.complex64),
+                      Inm)
 
   def swsft_forward_spins_channels_with_symmetry(
       self, sphere_set: Array, spins: Collection[int]) -> jnp.ndarray:
