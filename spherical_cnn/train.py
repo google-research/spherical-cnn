@@ -82,7 +82,11 @@ def create_train_state(config: ml_collections.ConfigDict, rng: np.ndarray,
     raise ValueError(f"Model {config.model_name} not supported.")
   model = get_model(num_classes, axis_name=_PMAP_AXIS_NAME)
 
-  variables = model.init(rng, jnp.ones(input_shape), train=False)
+  # We need to jit the init step to avoid OOMs on large models.
+  jit_init = jax.jit(functools.partial(model.init,
+                                       train=False))
+  variables = jit_init(rng, jnp.ones(input_shape))
+
   params = variables["params"]
   batch_stats = variables.get("batch_stats", {})
   constants = variables["constants"]
