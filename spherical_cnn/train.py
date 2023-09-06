@@ -135,6 +135,7 @@ def get_learning_rate(step: int,
                       base_learning_rate: float,
                       steps_per_epoch: int,
                       num_epochs: int,
+                      # This can be made float for warmups shorter than 1 epoch.
                       warmup_epochs: int = 5):
   """Cosine learning rate schedule."""
   logging.info(("get_learning_rate(step=%s, "
@@ -153,7 +154,12 @@ def get_learning_rate(step: int,
   epoch = step / steps_per_epoch
   lr = cosine_decay(base_learning_rate, epoch - warmup_epochs,
                     num_epochs - warmup_epochs)
-  warmup = jnp.minimum(1., epoch / warmup_epochs)
+
+  if warmup_epochs == 0:
+    warmup = 1.0
+  else:
+    warmup = jnp.minimum(1., epoch / warmup_epochs)
+
   return lr * warmup
 
 
