@@ -292,3 +292,11 @@ def apply_model_to_azimuthally_rotated_pairs(
   output = jnp.roll(output, shift // stride, axis=2)
 
   return output, rotated_output
+
+
+def mean_absolute_error(x, y):
+  return jnp.abs(x - y).mean()
+
+
+def normalized_mean_absolute_error(x, y):
+  return mean_absolute_error(x, y) / jnp.abs(x).mean()

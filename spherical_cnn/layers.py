@@ -27,7 +27,7 @@ spin, channel).
 """
 import abc
 import functools
-from typing import Any, Callable, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Optional, Sequence, Tuple, Type, Union
 from einshape.src.jax import jax_ops as einshape
 from flax import linen as nn
 import jax
@@ -922,3 +922,212 @@ class SpinSphericalSpectralBatchNormPhaseCollapse(BatchNormAndActivation):
     # Apply nonlinearity.
     return PhaseCollapseNonlinearity(
         spins=self.spins)(feature_maps)
+
+
+class SpinSphericalBlock(nn.Module):
+  """Spin-weighted block with pooling, convolution, batch norm and nonlinearity.
+
+  Attributes:
+    num_channels: Number of convolution output channels.
+    spins_in: A sequence of input spin weights.
+    spins_out: A sequence of output spin weights.
+    downsampling_factor: How much to downsample before applying the convolution.
+      Will not downsample when downsampling_factor==1.
+    spectral_pooling: When True, halve input dimensions via spectral pooling.
+    axis_name: Identifier for the mapped axis in parallel training.
+    after_conv_module: Module to apply after convolution. Usually a
+      non-linearity or batch norm + non-linearity. Must follow the interface of
+      `layers.SpinSphericalBatchNormMagnitudeNonlin`.
+    transformer: SpinSphericalFourierTransformer instance.
+    num_filter_params: Number of filter parameters in the convolutional layer.
+    input_representation: Whether inputs are in the 'spectral' or 'spatial'
+      domain.
+    output_representation: Whether outputs fed into `after_conv_module` are in
+      the 'spectral' or 'spatial' domain.
+  """
+
+  num_channels: int
+  spins_in: Sequence[int]
+  spins_out: Sequence[int]
+  downsampling_factor: int
+  spectral_pooling: bool
+  axis_name: Any
+  transformer: spin_spherical_harmonics.SpinSphericalFourierTransformer
+  after_conv_module: Type[nn.Module] = (
+      SpinSphericalBatchNormMagnitudeNonlin
+  )
+  num_filter_params: Optional[int] = None
+  input_representation: str = "spatial"
+  output_representation: str = "spatial"
+
+  @nn.compact
+  def __call__(
+      self, inputs: Array, train: bool, weights: Optional[Array] = None
+  ) -> jnp.ndarray:
+    """Apply block to `inputs`.
+
+    Args:
+      inputs: (batch_size, resolution, resolution, n_spins_in, n_channels_in)
+        array of spin-weighted spherical functions with equiangular sampling.
+      train: whether to run in training or inference mode.
+      weights: Weights per batch element used in batchnorm mean/std computation.
+
+    Returns:
+      A (batch_size, resolution // downsampling_factor, resolution //
+        downsampling_factor, n_spins_out, num_channels) complex64 array.
+    """
+    feature_maps = inputs
+    apply_spatial_pooling = (
+        self.downsampling_factor != 1 and not self.spectral_pooling
+    )
+    apply_spectral_pooling = (
+        self.downsampling_factor != 1 and self.spectral_pooling
+    )
+    if apply_spatial_pooling:
+      if self.input_representation == "spectral":
+        raise ValueError(
+            "Spectral input representation and "
+            "`apply_spatial_pooling` cannot be simultaneously True."
+        )
+      feature_maps = SphericalPooling(
+          stride=self.downsampling_factor, name="spherical_pool"
+      )(feature_maps)
+
+    feature_maps = SpinSphericalConvolution(
+        features=self.num_channels,
+        spins_in=self.spins_in,
+        spins_out=self.spins_out,
+        num_filter_params=self.num_filter_params,
+        spectral_pooling=apply_spectral_pooling,
+        spectral_upsampling=False,
+        input_representation=self.input_representation,
+        output_representation=self.output_representation,
+        transformer=self.transformer,
+        name="spherical_conv",
+    )(feature_maps)
+
+    return self.after_conv_module(
+        spins=self.spins_out,
+        use_running_stats=not train,
+        axis_name=self.axis_name,
+        transformer=self.transformer,
+        name="batch_norm_nonlin",
+    )(feature_maps, weights=weights)
+
+
+class SpinSphericalResidualBlock(SpinSphericalBlock):
+  """Residual spin spherical convolutional block.
+
+  This follows the SpinSphericalBlock signature, but replaces the
+  single convolutional layer by two convolutions with a residual
+  connection. It uses spectral batch norm and phase collapse
+  nonlinearity.
+  """
+
+  def _forward_transform(self, inputs, spins, ell_max=None):
+    return jax.vmap(
+        self.transformer.swsft_forward_spins_channels, [0, None, None]
+    )(inputs, spins, ell_max)
+
+  def _backward_transform(self, inputs, spins, ell_max=None):
+    return jax.vmap(self.transformer.swsft_backward_spins_channels, [0, None])(
+        inputs, spins
+    )
+
+  @nn.compact
+  def __call__(
+      self, inputs: Array, train: bool, weights: Optional[Array] = None
+  ) -> jnp.ndarray:
+    outputs = inputs
+
+    apply_spatial_pooling = (
+        self.downsampling_factor != 1 and not self.spectral_pooling
+    )
+    apply_spectral_pooling = (
+        self.downsampling_factor != 1 and self.spectral_pooling
+    )
+
+    if apply_spatial_pooling:
+      outputs = SphericalPooling(
+          stride=self.downsampling_factor, name="spherical_pool"
+      )(outputs)
+
+    # Do Fourier transform and apply spectral pooling if needed.
+    resolution = (
+        outputs.shape[1] // 2 if apply_spectral_pooling else outputs.shape[1]
+    )
+    ell_max = sphere_utils.ell_max_from_resolution(resolution)
+    outputs = self._forward_transform(outputs, self.spins_in, ell_max)
+
+    # `residual` is in the spectral domain for efficiency. It is added before
+    # nonlinearity, which is the only spatial operation.
+    residual = outputs
+
+    conv_options = dict(
+        spins_out=self.spins_out,
+        num_filter_params=self.num_filter_params,
+        spectral_pooling=False,
+        transformer=self.transformer,
+    )
+    batch_norm_options = dict(
+        spins=self.spins_out,
+        use_running_stats=not train,
+        axis_name=self.axis_name,
+    )
+
+    outputs = SpinSphericalBlock(
+        **conv_options,
+        num_channels=self.num_channels,
+        spins_in=self.spins_in,
+        downsampling_factor=1,
+        axis_name=self.axis_name,
+        input_representation="spectral",
+        output_representation="spectral",
+        after_conv_module=SpinSphericalSpectralBatchNormPhaseCollapse,
+        name="conv_block",
+    )(outputs, train, weights)
+    # `outputs` is now spatial.
+    # Second layer goes through batch norm only; nonlinearity is applied after
+    # adding the residual.
+    outputs = SpinSphericalConvolution(
+        **conv_options,
+        features=self.num_channels,
+        spins_in=self.spins_out,
+        output_representation="spectral",
+        spectral_upsampling=False,
+        name="conv2",
+    )(outputs)
+    # `outputs` is now spectral.
+    # Init scale of second BN as zero, following FixUp paper (ICLR'18).
+    outputs = SpinSphericalSpectralBatchNormalization(
+        **batch_norm_options,
+        scale_init=functools.partial(
+            nn.initializers.zeros, dtype=jnp.complex64
+        ),
+        name="batch_norm",
+    )(outputs, weights=weights)
+
+    # Match dimensions, if needed.
+    if residual.shape != self.num_channels:
+      residual = nn.Dense(
+          self.num_channels, dtype=jnp.complex64, param_dtype=jnp.float32
+      )(residual)
+      residual = SpinSphericalSpectralBatchNormalization(
+          **batch_norm_options, name="batch_norm_residual"
+      )(residual, weights=weights)
+
+    if self.spins_in == self.spins_out:
+      outputs = residual + outputs
+    else:
+      # If spins are changing, only add the ones in both input and output.
+      intersection = tuple(set(self.spins_in).intersection(self.spins_out))
+      idx_in = [self.spins_in.index(spin) for spin in intersection]
+      idx_out = [self.spins_out.index(spin) for spin in intersection]
+      outputs = outputs.at[..., idx_out, :].add(residual[..., idx_in, :])
+
+    # `outputs` is still spectral; apply IFT and nonlinearity.
+    outputs = self._backward_transform(outputs, self.spins_out)
+
+    return PhaseCollapseNonlinearity(
+        spins=self.spins_out, name="nonlin"
+    )(outputs)

@@ -682,5 +682,185 @@ class SpinSphericalSpectralBatchNormalizationTest(
     )
 
 
+class SpinSphericalBlockTest(tf.test.TestCase, parameterized.TestCase):
+
+  @parameterized.parameters(
+      dict(downsampling_factor=1,
+           output_representation="spatial",
+           after_conv_module=layers.SpinSphericalBatchNormMagnitudeNonlin),
+      dict(downsampling_factor=2,
+           output_representation="spatial",
+           after_conv_module=layers.SpinSphericalBatchNormMagnitudeNonlin),
+      dict(downsampling_factor=2,
+           output_representation="spectral",
+           after_conv_module=layers.SpinSphericalSpectralBatchNormPhaseCollapse)
+      )
+  def test_downsampling_factor_output_shape(self,
+                                            downsampling_factor,
+                                            output_representation,
+                                            after_conv_module):
+    transformer = _get_transformer()
+    num_channels = 2
+    spins_in = [0]
+    spins_out = [0, 1]
+    batch_size = 2
+    resolution = 8
+    model = layers.SpinSphericalBlock(
+        num_channels=num_channels,
+        spins_in=spins_in,
+        spins_out=spins_out,
+        downsampling_factor=downsampling_factor,
+        spectral_pooling=False,
+        axis_name=None,
+        output_representation=output_representation,
+        after_conv_module=after_conv_module,
+        transformer=transformer)
+
+    shape = [batch_size, resolution, resolution, len(spins_in), num_channels]
+    inputs = jnp.ones(shape)
+    params = model.init(jax.random.PRNGKey(0), inputs, train=False)
+    outputs = model.apply(params, inputs, train=False)
+    shape_out = (batch_size,
+                 resolution // downsampling_factor,
+                 resolution // downsampling_factor,
+                 len(spins_out), num_channels)
+
+    self.assertEqual(outputs.shape, shape_out)
+
+  @parameterized.parameters(
+      dict(shift=1, train=False),
+      dict(shift=5, train=True, num_filter_params=2),
+      dict(shift=2, train=True, downsampling_factor=2),
+      dict(shift=2, train=True, downsampling_factor=2, spectral_pooling=True),
+  )
+  def test_azimuthal_equivariance(self, shift, train,
+                                  downsampling_factor=1,
+                                  num_filter_params=None,
+                                  spectral_pooling=False):
+    resolution = 8
+    transformer = _get_transformer()
+    spins = (0, 1, 2)
+    shape = (2, resolution, resolution, len(spins), 2)
+
+    sphere, _ = test_utils.get_spin_spherical(transformer, shape, spins)
+    rotated_sphere = jnp.roll(sphere, shift, axis=2)
+
+    model = layers.SpinSphericalBlock(num_channels=2,
+                                      spins_in=spins,
+                                      spins_out=spins,
+                                      downsampling_factor=downsampling_factor,
+                                      spectral_pooling=spectral_pooling,
+                                      num_filter_params=num_filter_params,
+                                      axis_name=None,
+                                      transformer=transformer)
+    params = model.init(jax.random.PRNGKey(0), sphere, train=False)
+
+    # Add negative bias so that the magnitude nonlinearity is active.
+    params = flax.core.unfreeze(params)
+    for key, value in params["params"]["batch_norm_nonlin"].items():
+      if "magnitude_nonlin" in key:
+        value["bias"] -= 0.1
+
+    output, _ = model.apply(params, sphere, train=train,
+                            mutable=["batch_stats"])
+    rotated_output, _ = model.apply(params, rotated_sphere, train=train,
+                                    mutable=["batch_stats"])
+    shifted_output = jnp.roll(output, shift // downsampling_factor, axis=2)
+
+    self.assertAllClose(rotated_output, shifted_output, atol=1e-6)
+
+  @parameterized.parameters(False, True)
+  def test_equivariance(self, train):
+    resolution = 8
+    spins = (0, -1, 2)
+    transformer = _get_transformer()
+    model = layers.SpinSphericalBlock(num_channels=2,
+                                      spins_in=spins,
+                                      spins_out=spins,
+                                      downsampling_factor=1,
+                                      spectral_pooling=False,
+                                      axis_name=None,
+                                      transformer=transformer)
+
+    init_args = dict(train=False)
+    apply_args = dict(train=train, mutable=["batch_stats"])
+
+    coefficients_1, coefficients_2, _ = test_utils.apply_model_to_rotated_pairs(
+        transformer, model, resolution, spins,
+        init_args=init_args, apply_args=apply_args)
+
+    # Tolerance needs to be high here due to approximate equivariance. We check
+    # the mean absolute error.
+    self.assertLess(
+        test_utils.normalized_mean_absolute_error(coefficients_1,
+                                                  coefficients_2),
+        0.1)
+
+
+class SpinSphericalResidualBlockTest(tf.test.TestCase, parameterized.TestCase):
+
+  @parameterized.parameters(
+      dict(num_channels=2, spins_in=(0,), spins_out=(0, 1)),
+      dict(num_channels=3, spins_in=(0, 1), spins_out=(0,)),
+      dict(
+          num_channels=1,
+          spins_in=(0, 1),
+          spins_out=(0, 1),
+          downsampling_factor=2,
+          spectral_pooling=False,
+      ),
+      dict(
+          num_channels=1,
+          spins_in=(0, 1),
+          spins_out=(0, 1, 2),
+          downsampling_factor=2,
+          spectral_pooling=True,
+      ),
+  )
+  def test_shape(
+      self,
+      num_channels,
+      spins_in,
+      spins_out,
+      downsampling_factor=1,
+      spectral_pooling=False,
+  ):
+    transformer = _get_transformer()
+    model = layers.SpinSphericalResidualBlock(
+        num_channels,
+        spins_in,
+        spins_out,
+        downsampling_factor,
+        spectral_pooling,
+        axis_name=None,
+        transformer=transformer,
+    )
+
+    batch_size, resolution, num_channels_in = 2, 8, 3
+    input_shape = (
+        batch_size,
+        resolution,
+        resolution,
+        len(spins_in),
+        num_channels_in,
+    )
+    inputs = jnp.ones(input_shape)
+
+    rng = jax.random.PRNGKey(0)
+    params = model.init(rng, inputs, train=False)
+
+    outputs = model.apply(params, inputs, train=False)
+    self.assertEqual(
+        outputs.shape,
+        (
+            batch_size,
+            resolution // downsampling_factor,
+            resolution // downsampling_factor,
+            len(spins_out),
+            num_channels,
+        ),
+    )
+
+
 if __name__ == "__main__":
   tf.test.main()
