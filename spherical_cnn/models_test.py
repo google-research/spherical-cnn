@@ -27,12 +27,6 @@ from spherical_cnn import test_utils
 import tensorflow as tf
 
 
-# Pseudo-random number generator keys to deterministically initialize
-# parameters. The initialization could cause flakiness in the unlikely event
-# that JAX changes its pseudo-random algorithm.
-_JAX_RANDOM_KEY = np.array([0, 0], dtype=np.uint32)
-
-
 @functools.lru_cache()
 def _get_transformer():
   return spin_spherical_harmonics.SpinSphericalFourierTransformer(
@@ -83,7 +77,7 @@ class SpinSphericalBlockTest(tf.test.TestCase, parameterized.TestCase):
 
     shape = [batch_size, resolution, resolution, len(spins_in), num_channels]
     inputs = jnp.ones(shape)
-    params = model.init(_JAX_RANDOM_KEY, inputs, train=False)
+    params = model.init(jax.random.PRNGKey(0), inputs, train=False)
     outputs = model.apply(params, inputs, train=False)
     shape_out = (batch_size,
                  resolution // downsampling_factor,
@@ -118,7 +112,7 @@ class SpinSphericalBlockTest(tf.test.TestCase, parameterized.TestCase):
                                       num_filter_params=num_filter_params,
                                       axis_name=None,
                                       transformer=transformer)
-    params = model.init(_JAX_RANDOM_KEY, sphere, train=False)
+    params = model.init(jax.random.PRNGKey(0), sphere, train=False)
 
     # Add negative bias so that the magnitude nonlinearity is active.
     params = flax.core.unfreeze(params)
@@ -248,7 +242,7 @@ class SpinSphericalClassifierTest(tf.test.TestCase, parameterized.TestCase):
     resolution = resolutions[0]
     shape = [batch_size, resolution, resolution, len(spins[0]), channels[0]]
     inputs = jnp.ones(shape)
-    params = model.init(_JAX_RANDOM_KEY, inputs, train=False)
+    params = model.init(jax.random.PRNGKey(0), inputs, train=False)
     outputs = model.apply(params, inputs, train=False)
 
     self.assertEqual(outputs.shape, (batch_size, num_classes))
@@ -271,7 +265,7 @@ class SpinSphericalClassifierTest(tf.test.TestCase, parameterized.TestCase):
                                            spectral_pooling=False,
                                            axis_name=None,
                                            input_transformer=transformer)
-    params = model.init(_JAX_RANDOM_KEY, sphere, train=False)
+    params = model.init(jax.random.PRNGKey(0), sphere, train=False)
 
     output, _ = model.apply(params, sphere, train=True,
                             mutable=['batch_stats'])
@@ -299,7 +293,7 @@ class SpinSphericalClassifierTest(tf.test.TestCase, parameterized.TestCase):
                                            axis_name=None,
                                            input_transformer=transformer)
 
-    params = model.init(_JAX_RANDOM_KEY, pair.sphere, train=False)
+    params = model.init(jax.random.PRNGKey(0), pair.sphere, train=False)
 
     output, _ = model.apply(params, pair.sphere, train=True,
                             mutable=['batch_stats'])
@@ -327,7 +321,7 @@ class CNNClassifierTest(tf.test.TestCase, parameterized.TestCase):
     resolution = resolutions[0]
     shape = [batch_size, resolution, resolution, 1, channels[0]]
     inputs = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)
-    params = model.init(_JAX_RANDOM_KEY, inputs, train=False)
+    params = model.init(jax.random.PRNGKey(0), inputs, train=False)
     outputs = model.apply(params, inputs, train=False)
 
     self.assertEqual(outputs.shape, (batch_size, num_classes))

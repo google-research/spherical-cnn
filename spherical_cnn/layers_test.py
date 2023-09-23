@@ -27,12 +27,6 @@ from spherical_cnn import spin_spherical_harmonics
 from spherical_cnn import test_utils
 import tensorflow as tf
 
-
-# Pseudo-random number generator keys to deterministically initialize
-# parameters. The initialization could cause flakiness in the unlikely event
-# that JAX changes its pseudo-random algorithm.
-_JAX_RANDOM_KEY = np.array([0, 0], dtype=np.uint32)
-
 TransformerModule = spin_spherical_harmonics.SpinSphericalFourierTransformer
 
 
@@ -115,14 +109,14 @@ class LayersTest(tf.test.TestCase, parameterized.TestCase):
                   spectral_upsampling=spectral_upsampling,
                   input_representation=input_representation,
                   output_representation="spatial")
-    variables = conv.init(_JAX_RANDOM_KEY, inputs, *args, **kwargs)
+    variables = conv.init(jax.random.PRNGKey(0), inputs, *args, **kwargs)
     sphere_out = conv.apply(variables, inputs, *args, **kwargs)
 
     rotated_sphere_out = conv.apply(variables, rotated_inputs, *args, **kwargs)
 
     # Now since the convolution is SO(3)-equivariant, the same rotation that
     # relates the inputs must relate the outputs. We apply it spectrally.
-    variables = transformer.init(_JAX_RANDOM_KEY)
+    variables = transformer.init(jax.random.PRNGKey(0))
     coefficients_out = transformer.apply(
         variables, sphere_out, spins_out,
         method=TransformerModule.swsft_forward_spins_channels)
@@ -204,7 +198,7 @@ class SpinSphericalConvolutionTest(tf.test.TestCase, parameterized.TestCase):
         input_representation=input_representation,
         output_representation=output_representation,
         use_bias=use_bias)
-    params = model.init(_JAX_RANDOM_KEY, inputs)
+    params = model.init(jax.random.PRNGKey(0), inputs)
     out = model.apply(params, inputs)
 
     if spectral_pooling:
@@ -256,7 +250,7 @@ class SpinSphericalConvolutionTest(tf.test.TestCase, parameterized.TestCase):
         spectral_pooling=False,
         spectral_upsampling=False,
         num_filter_params=num_filter_params)
-    params = model.init(_JAX_RANDOM_KEY, inputs)
+    params = model.init(jax.random.PRNGKey(0), inputs)
 
     expected_shape = (len(spins_in), len(spins_out),
                       num_channels_in, num_channels_out,
@@ -281,7 +275,7 @@ class SpinSphericalConvolutionTest(tf.test.TestCase, parameterized.TestCase):
                                             features=n_channels_out,
                                             spectral_pooling=False,
                                             spectral_upsampling=False)
-    params = model.init(_JAX_RANDOM_KEY, inputs)
+    params = model.init(jax.random.PRNGKey(0), inputs)
 
     # The parameters for localized filters are transposed for performance
     # reasons. This custom initializer undoes the transposing so the init is the
@@ -302,7 +296,7 @@ class SpinSphericalConvolutionTest(tf.test.TestCase, parameterized.TestCase):
         spectral_upsampling=False,
         num_filter_params=ell_max + 1,
         initializer=_transposed_initializer)
-    params_localized = model_localized.init(_JAX_RANDOM_KEY, inputs)
+    params_localized = model_localized.init(jax.random.PRNGKey(0), inputs)
 
     self.assertAllClose(params["params"]["kernel"].transpose(1, 2, 3, 4, 0),
                         params_localized["params"]["kernel"])
@@ -324,7 +318,7 @@ class MagnitudeNonlinearityTest(tf.test.TestCase, parameterized.TestCase):
     inputs = inputs.at[:, small_row].set(0.1)
 
     model = layers.MagnitudeNonlinearity()
-    params = model.init(_JAX_RANDOM_KEY, inputs)
+    params = model.init(jax.random.PRNGKey(0), inputs)
 
     # With zero bias output must match input.
     bias = params["params"]["bias"].at[:].set(0.0)
@@ -381,13 +375,13 @@ def _evaluate_magnitudenonlinearity_versions(spins):
                                             spins=spins)
   model = layers.MagnitudeNonlinearity(
       bias_initializer=_magnitude_nonlinearity_nonzero_initializer)
-  params = model.init(_JAX_RANDOM_KEY, inputs)
+  params = model.init(jax.random.PRNGKey(0), inputs)
   outputs = model.apply(params, inputs)
 
   model_relu = layers.MagnitudeNonlinearityLeakyRelu(
       spins=spins,
       bias_initializer=_magnitude_nonlinearity_nonzero_initializer)
-  params_relu = model_relu.init(_JAX_RANDOM_KEY, inputs)
+  params_relu = model_relu.init(jax.random.PRNGKey(0), inputs)
   outputs_relu = model_relu.apply(params_relu, inputs)
 
   return inputs, outputs, outputs_relu
@@ -464,7 +458,7 @@ class SphericalPoolingTest(tf.test.TestCase, parameterized.TestCase):
     inputs = inputs.at[:, 1].set(second_latitude)
 
     model = layers.SphericalPooling(stride=2)
-    params = model.init(_JAX_RANDOM_KEY, inputs)
+    params = model.init(jax.random.PRNGKey(0), inputs)
 
     pooled = model.apply(params, inputs)
     # Since both the area and the value in the second band are larger than the
@@ -503,7 +497,7 @@ class SphericalPoolingTest(tf.test.TestCase, parameterized.TestCase):
     spherical_mean = sphere_utils.spin_spherical_mean(inputs)
 
     model = layers.SphericalPooling(stride=resolution)
-    params = model.init(_JAX_RANDOM_KEY, inputs)
+    params = model.init(jax.random.PRNGKey(0), inputs)
     pooled = model.apply(params, inputs)
 
     # Tolerance here is higher because of slightly different quadratures.
@@ -522,7 +516,7 @@ class SphericalBatchNormalizationTest(tf.test.TestCase,
   def test_output_and_running_variance(self):
     momentum = 0.9
     input_shape = (2, 6, 5, 4, 3, 2)
-    real, imaginary = jax.random.normal(_JAX_RANDOM_KEY, input_shape)
+    real, imaginary = jax.random.normal(jax.random.PRNGKey(0), input_shape)
     inputs = real + 1j * imaginary
 
     model = layers.SphericalBatchNormalization(momentum=momentum,
@@ -531,7 +525,8 @@ class SphericalBatchNormalizationTest(tf.test.TestCase,
                                                centered=False)
 
     # Output variance must be one.
-    output, initial_params = model.init_with_output(_JAX_RANDOM_KEY, inputs)
+    output, initial_params = model.init_with_output(jax.random.PRNGKey(0),
+                                                    inputs)
     output_variance = _batched_spherical_variance(output)
     with self.subTest(name="OutputVarianceIsOne"):
       self.assertAllClose(output_variance, jnp.ones_like(output_variance),

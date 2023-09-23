@@ -205,7 +205,7 @@ def apply_model_to_rotated_pairs(
   if apply_args is None:
     apply_args = {}
 
-  key = np.array([0, 0], dtype=np.uint32)
+  key = jax.random.PRNGKey(0)
   shape = (2, resolution, resolution, len(spins), 2)
   alpha, beta, gamma = 1.0, 2.0, 3.0
   pair = get_rotated_pair(transformer,
@@ -274,7 +274,7 @@ def apply_model_to_azimuthally_rotated_pairs(
   if apply_args is None:
     apply_args = {}
 
-  key = np.array([0, 0], dtype=np.uint32)
+  key = jax.random.PRNGKey(0)
   shape = (2, resolution, resolution, len(spins), 2)
   sphere, _ = get_spin_spherical(transformer, shape, spins)
   rotated_sphere = jnp.roll(sphere, shift, axis=2)
