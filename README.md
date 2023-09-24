@@ -24,10 +24,11 @@ git clone https://github.com/google-research/spherical-cnn.git
 cd spherical-cnn
 # Create a docker container, download and install dependencies, download and
 # process the dataset.
-docker build -t spherical_cnn .
+docker build -f dockerfile-spherical-mnist -t spherical_cnn .
 # Start training.
 docker run spherical_cnn \
     --workdir=/tmp/training_logs \
+    --config=spherical_cnn/spherical_mnist/configs/default.py \
     --config.model_name=spin_classifier_6_layers \
     --config.dataset=spherical_mnist/rotated \
     --config.combine_train_val_and_eval_on_test

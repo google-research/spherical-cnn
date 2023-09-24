@@ -23,7 +23,7 @@ RUN chown -R 1000:root /workdir && chmod -R 775 /workdir
 
 # Build dataset as user.
 USER 1000
-RUN cd /workdir/spherical_cnn/spherical_mnist && tfds build && cd -
+RUN cd /workdir/spherical_cnn/spherical_mnist/data && tfds build spherical_mnist && cd -
 
 # Run training job.
-ENTRYPOINT ["python3", "-m", "spherical_cnn.main"]
+ENTRYPOINT ["python3", "-m", "spherical_cnn.spherical_mnist.main"]

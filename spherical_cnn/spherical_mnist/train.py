@@ -32,8 +32,8 @@ import jax.numpy as jnp
 import ml_collections
 import numpy as np
 import optax
-from spherical_cnn import input_pipeline
-from spherical_cnn import models
+from spherical_cnn.spherical_mnist import input_pipeline
+from spherical_cnn.spherical_mnist import models
 import tensorflow as tf
 
 

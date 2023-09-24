@@ -16,8 +16,8 @@
 
 from absl.testing import parameterized
 import jax
-from spherical_cnn import input_pipeline
-from spherical_cnn.configs import default
+from spherical_cnn.spherical_mnist import input_pipeline
+from spherical_cnn.spherical_mnist.configs import default
 import tensorflow as tf
 import tensorflow_datasets as tfds
 

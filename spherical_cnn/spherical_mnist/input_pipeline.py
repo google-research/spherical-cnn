@@ -14,15 +14,14 @@
 
 """Deterministic input pipeline."""
 
-import dataclasses
 from typing import Callable, Dict, Optional, Union
 from clu import deterministic_data
 import jax
 import jax.numpy as jnp
 import ml_collections
 import numpy as np
+from spherical_cnn import input_pipeline_utils
 # Register spherical_mnist so that tfds.load works.
-import spherical_cnn.spherical_mnist.spherical_mnist  # pylint: disable=unused-import
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -30,17 +29,9 @@ Tensor = Union[tf.Tensor, tf.SparseTensor, tf.RaggedTensor]
 Features = Dict[str, Tensor]
 
 
-# Dataset creation functions return info, train, validation and test sets.
-@dataclasses.dataclass
-class DatasetSplits:
-  info: tfds.core.DatasetInfo
-  train: tf.data.Dataset
-  validation: tf.data.Dataset
-  test: tf.data.Dataset
-
-
-def create_datasets(config: ml_collections.ConfigDict,
-                    data_rng: jnp.ndarray) -> DatasetSplits:
+def create_datasets(
+    config: ml_collections.ConfigDict, data_rng: jnp.ndarray
+) -> input_pipeline_utils.DatasetSplits:
   """Create datasets for training and evaluation.
 
   For the same data_rng and config this will return the same datasets. The
@@ -63,7 +54,8 @@ def create_datasets(config: ml_collections.ConfigDict,
 
 
 def _create_dataset_tiny_dummy(
-    config: ml_collections.ConfigDict) -> DatasetSplits:
+    config: ml_collections.ConfigDict,
+) -> input_pipeline_utils.DatasetSplits:
   """Create low-resolution dataset for testing. See create_datasets()."""
   size = 100
   resolution = 8
@@ -87,10 +79,12 @@ def _create_dataset_tiny_dummy(
 
   # We don't really care about the difference between train, validation and test
   # and for dummy data.
-  return DatasetSplits(info=dataset_info,
-                       train=train_dataset,
-                       validation=train_dataset.take(5),
-                       test=train_dataset.take(5))
+  return input_pipeline_utils.DatasetSplits(
+      info=dataset_info,
+      train=train_dataset,
+      validation=train_dataset.take(5),
+      test=train_dataset.take(5),
+  )
 
 
 def _preprocess_spherical_mnist(features: Features) -> Features:
@@ -130,47 +124,9 @@ def create_train_dataset(
   return train_dataset
 
 
-def create_eval_dataset(
-    config: ml_collections.ConfigDict,
-    dataset_builder: tfds.core.DatasetBuilder,
-    split: str,
-    preprocess_fn: Optional[Callable[[Features], Features]] = None,
-) -> tf.data.Dataset:
-  """Create evaluation dataset (validation or test sets)."""
-  # This ensures the correct number of elements in the validation sets.
-  num_validation_examples = (
-      dataset_builder.info.splits[split].num_examples)
-  eval_split = deterministic_data.get_read_instruction_for_host(
-      split, dataset_info=dataset_builder.info, drop_remainder=False)
-
-  eval_num_batches = None
-  if config.eval_pad_last_batch:
-    # This is doing some extra work to get exactly all examples in the
-    # validation split. Without this the dataset would first be split between
-    # the different hosts and then into batches (both times dropping the
-    # remainder). If you don't mind dropping a few extra examples you can omit
-    # the `pad_up_to_batches` argument.
-    eval_batch_size = jax.local_device_count() * config.per_device_batch_size
-    eval_num_batches = int(np.ceil(num_validation_examples /
-                                   eval_batch_size /
-                                   jax.process_count()))
-  return deterministic_data.create_dataset(
-      dataset_builder,
-      split=eval_split,
-      # Only cache dataset in distributed setup to avoid consuming a lot of
-      # memory in Colab and unit tests.
-      cache=jax.process_count() > 1,
-      batch_dims=[jax.local_device_count(), config.per_device_batch_size],
-      num_epochs=1,
-      shuffle=False,
-      preprocess_fn=preprocess_fn,
-      pad_up_to_batches=eval_num_batches,
-  )
-
-
 def _create_dataset_spherical_mnist(
-    config: ml_collections.ConfigDict,
-    data_rng: jnp.ndarray) -> DatasetSplits:
+    config: ml_collections.ConfigDict, data_rng: jnp.ndarray
+) -> input_pipeline_utils.DatasetSplits:
   """Create Spherical MNIST. See create_datasets()."""
 
   dataset_loaded = False
@@ -197,18 +153,22 @@ def _create_dataset_spherical_mnist(
       train_split,
       data_rng,
       preprocess_fn=_preprocess_spherical_mnist)
-  validation_dataset = create_eval_dataset(
+  validation_dataset = input_pipeline_utils.create_eval_dataset(
       config,
       dataset_builder,
       validation_split,
-      preprocess_fn=_preprocess_spherical_mnist)
-  test_dataset = create_eval_dataset(
+      preprocess_fn=_preprocess_spherical_mnist,
+  )
+  test_dataset = input_pipeline_utils.create_eval_dataset(
       config,
       dataset_builder,
       test_split,
-      preprocess_fn=_preprocess_spherical_mnist)
+      preprocess_fn=_preprocess_spherical_mnist,
+  )
 
-  return DatasetSplits(info=dataset_builder.info,
-                       train=train_dataset,
-                       validation=validation_dataset,
-                       test=test_dataset)
+  return input_pipeline_utils.DatasetSplits(
+      info=dataset_builder.info,
+      train=train_dataset,
+      validation=validation_dataset,
+      test=test_dataset,
+  )

@@ -24,7 +24,7 @@ from absl import logging
 from clu import platform
 import jax
 from ml_collections import config_flags
-from spherical_cnn import train
+from spherical_cnn.spherical_mnist import train
 import tensorflow as tf
 
 

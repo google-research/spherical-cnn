@@ -19,9 +19,9 @@ from absl.testing import parameterized
 import jax
 import jax.numpy as jnp
 import numpy as np
-from spherical_cnn import models
 from spherical_cnn import spin_spherical_harmonics
 from spherical_cnn import test_utils
+from spherical_cnn.spherical_mnist import models
 import tensorflow as tf
 
 

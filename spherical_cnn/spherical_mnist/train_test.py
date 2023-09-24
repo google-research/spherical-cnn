@@ -21,8 +21,8 @@ from absl import logging
 from absl.testing import parameterized
 import jax
 import jax.numpy as jnp
-from spherical_cnn import train
-from spherical_cnn.configs import default
+from spherical_cnn.spherical_mnist import train
+from spherical_cnn.spherical_mnist.configs import default
 import tensorflow as tf
 
 
