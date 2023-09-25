@@ -37,7 +37,7 @@ class TestUtilsTest(tf.test.TestCase, parameterized.TestCase):
     transformer = _get_transformer()
     *_, num_spins, _ = shape
     spins = jnp.arange(num_spins)
-    pair = test_utils.get_rotated_pair(transformer,
+    pair = test_utils.get_rotated_pair(transformer,  # pytype: disable=wrong-arg-types  # jnp-type
                                        shape,
                                        spins,
                                        1.0, 2.0, 3.0)
