@@ -21,7 +21,6 @@ import jax.numpy as jnp
 import ml_collections
 import numpy as np
 from spherical_cnn import input_pipeline_utils
-# Register spherical_mnist so that tfds.load works.
 import tensorflow as tf
 import tensorflow_datasets as tfds
 

@@ -29,5 +29,5 @@ jobs:
 
     # Run tests (in parallel)
     - name: Run core tests
-      # Skip dataset tests that require downloading and preprocessing.
-      run: pytest -vv -n auto -k 'not test_create_datasets_spherical_mnist'
+      # Skip dataset tests that require downloading and preprocessing data.
+      run: pytest -vv -n auto -k 'not test_create_datasets and not test_train_and_evaluate_mock_qm9'
