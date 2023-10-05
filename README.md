@@ -12,7 +12,7 @@ CNNs](https://arxiv.org/pdf/1711.06721)", ECCV'18.
 
 ### QM9
 
-Coming soon!
+Code is available, instructions coming soon!
 
 ### Spherical MNIST
 
