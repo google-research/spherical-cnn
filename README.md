@@ -10,9 +10,34 @@ CNNs](https://arxiv.org/pdf/1711.06721)", ECCV'18.
 
 ## Experiments
 
+### Weather forecasting
+
+Coming soon!
+
 ### QM9
 
-Code is available, instructions coming soon!
+Use the following instructions to launch a short training job on QM9/H. See
+[default.py](https://github.com/google-research/spherical-cnn/blob/main/spherical_cnn/molecules/configs/default.py)
+for the longer configurations that reproduce the results in the paper.
+
+```shell
+git clone https://github.com/google-research/spherical-cnn.git
+cd spherical-cnn
+# Create a docker container, download and install dependencies, download and
+# process the dataset.
+docker build -f dockerfile-qm9 -t spherical_cnn_qm9 .
+# Start training.
+docker run spherical_cnn_qm9 \
+    --workdir=/tmp/training_logs \
+    --config=spherical_cnn/spherical_mnist/configs/small.py \
+    --config.per_device_batch_size=2
+```
+
+It should train at around 21.9 steps/s with batch size 2 on 8 V100s and reach
+around 10.83 meV error for the enthalpy of atomization H (this trains for 250
+epochs while 5.69 meV error in the paper was obtained by training for 2000
+epochs, see
+[default.py](https://github.com/google-research/spherical-cnn/blob/main/spherical_cnn/molecules/configs/default.py)).
 
 ### Spherical MNIST
 
@@ -24,9 +49,9 @@ git clone https://github.com/google-research/spherical-cnn.git
 cd spherical-cnn
 # Create a docker container, download and install dependencies, download and
 # process the dataset.
-docker build -f dockerfile-spherical-mnist -t spherical_cnn .
+docker build -f dockerfile-spherical-mnist -t spherical_cnn_mnist .
 # Start training.
-docker run spherical_cnn \
+docker run spherical_cnn_mnist \
     --workdir=/tmp/training_logs \
     --config=spherical_cnn/spherical_mnist/configs/default.py \
     --config.model_name=spin_classifier_6_layers \
@@ -61,7 +86,7 @@ The code is extensively tested. The snippet below runs all tests given a docker
 container created from instructions above.
 
 ```shell
-docker run --entrypoint pytest -it spherical_cnn -vv spherical_cnn
+docker run --entrypoint pytest -it spherical_cnn -vv spherical_cnn_mnist
 ```
 
 ## References
