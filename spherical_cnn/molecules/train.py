@@ -29,7 +29,6 @@ import flax
 import flax.jax_utils as flax_utils
 import flax.linen as nn
 import jax
-from jax.experimental.compilation_cache import compilation_cache
 import jax.numpy as jnp
 import ml_collections
 import numpy as np
@@ -493,12 +492,6 @@ def train_and_evaluate(config: ml_collections.ConfigDict, workdir: str):
     `config.log_loss_every_steps`.
   """
   tf.io.gfile.makedirs(workdir)
-
-  # Set JAX compilation cache.
-  if not compilation_cache.is_initialized():
-    compilation_cache_dir = os.path.join(os.path.dirname(workdir),
-                                         "compilation_cache")
-    compilation_cache.initialize_cache(compilation_cache_dir)
 
   rng = jax.random.PRNGKey(config.seed)
 
