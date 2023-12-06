@@ -38,7 +38,7 @@ changelog = "https://github.com/google-research/spherical-cnn/blob/main/CHANGELO
 # documentation = ""
 
 [project.optional-dependencies]
-# Development deps (unittest, linting, formating,...)
+# Development deps (unittest, linting, formatting,...)
 # Installed through `pip install -e .[dev]`
 dev = [
     "pytest",
