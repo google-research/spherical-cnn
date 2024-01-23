@@ -12,16 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Basic test."""
+"""ERA5 dataset."""
 
-import unittest
-import spherical_cnn
-
-
-class SphericalCNNTest(unittest.TestCase):
-
-  def test_basic(self):
-    self.assertEqual(spherical_cnn.__version__, '0.1.0')
-
-if __name__ == '__main__':
-  unittest.main()
+from spherical_cnn.weather.data.era5.era5 import Era5GCS
