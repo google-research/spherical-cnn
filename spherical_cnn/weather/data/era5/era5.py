@@ -13,23 +13,29 @@
 # limitations under the License.
 
 # pylint: disable=line-too-long
-r"""ERA5 dataset.
+r"""Build ERA5 dataset variants.
+
+The current available datasets are set up following the description
+in Keisler, "Forecasting Global Weather with Graph Neural Networks",
+arXiv'22, with only changes to the input resolution.
+
+Currently we only provide the smallest resolution (32 x 32). Each year
+takes around 4min to process in a single machine and 400Mb of disk
+space; there are 42 years. The code should work for higher resolutions
+(and the source data is available is the same GCS directory) but it
+might be unfeasible to run in a single machine.
 
 For local dataset generation, run the following from the directory
-containing this file:
+containing pyproject.toml:
 
 ```
-virtualenv venv
-source venv/bin/activate
-cd /tmp/spherical_cnn_copybara/spherical_cnn/weather/data/era5
-pip install -r requirements.txt
+conda create --prefix env python=3.10 -y
+conda activate env
+pip install pytest
+pip install -e .
+cd spherical_cnn/weather/data/era5
 tfds build era5 --file_format array_record
 ```
-
-Currently this only supports the smallest resolution (32 x 32). Each
-year takes around 4min to process in a single machine and 400Mb of
-disk space. The code should work for higher resolutions but it might
-be unfeasible to run in a single machine.
 """
 
 import dataclasses
@@ -51,10 +57,14 @@ TIME_FINAL = np.datetime64('2021-12-31T23:00:00.000000000')
 ALL_LEVELS = (50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 850, 925, 1000)
 
 
+def _subsample_longitude_index(longitude):
+  if max(longitude) > 2*np.pi:
+    raise ValueError('Expected longitude in degrees!')
+  return np.linspace(0, 360, len(longitude)//2 + 1)[:-1]
+
+
 def _subsample_longitudes(data):
-  longitude = data.indexes['longitude']
-  assert longitude.max() > 2*np.pi, 'Expected longitude in degrees!'
-  new_longitude = np.linspace(0, 360, len(longitude)//2 + 1)[:-1]
+  new_longitude = _subsample_longitude_index(data.indexes['longitude'])
   assert len(new_longitude) == len(data.indexes['latitude'])
   # Use cubic interpolation to avoid just taking every other value.
   return data.interp(longitude=new_longitude, method='cubic')
@@ -126,10 +136,17 @@ class Era5GCS(tfds.core.GeneratorBasedBuilder):
     metadata = {}
     for v in data:
       if 'time' not in data[v].indexes:
-        subsampled = _subsample_longitudes(data[v])
-        metadata[v] = subsampled.values.tolist()
+        if self.builder_config.subsample_longitudes:
+          subsampled = _subsample_longitudes(data[v])
+          metadata[v] = subsampled.values.tolist()
+        else:
+          metadata[v] = data[v].values.tolist()
     for v in data.indexes:
       metadata[v] = data[v].values.tolist()
+    # Subsample longitudes in index.
+    if self.builder_config.subsample_longitudes:
+      metadata['longitude'] = _subsample_longitude_index(
+          metadata['longitude']).tolist()
     return tfds.core.MetadataDict(metadata)
 
   def _info(self) -> tfds.core.DatasetInfo:
