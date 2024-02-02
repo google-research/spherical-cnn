@@ -16,6 +16,77 @@
 
 from typing import Optional, Sequence, TypeVar
 import grain.python as grain
+import numpy as np
+
+
+def _get_constants(metadata, with_longitude=False):
+  """Return the constant fields.
+
+  Args:
+    metadata: dataset metadata.
+    with_longitude: whether to include the longitude in the output.
+
+  Returns:
+    Constants in (lon, lat, channels) order. Channels include land-sea
+    mask, orography and sin(latitude). If `with_longitude` is true we
+    also include sin(longitude) and cos(longitude).
+  """
+  orography = np.array(metadata['geopotential_at_surface'],
+                       dtype=np.float32)
+  orography /= orography.max()
+  land_sea_mask = np.array(metadata['land_sea_mask'],
+                           dtype=np.float32)
+  # Lat is from -90 to 90 deg.
+  latitude = np.sin(np.radians(metadata['latitude'],
+                               dtype=np.float32))
+  latitude = np.broadcast_to(latitude, land_sea_mask.shape)
+
+  constants = [land_sea_mask, orography, latitude]
+  if with_longitude:
+    longitude = np.radians(metadata['longitude'],
+                           dtype=np.float32)
+    longitude = np.broadcast_to(longitude[:, None], land_sea_mask.shape)
+    constants += [np.sin(longitude), np.cos(longitude)]
+
+  return np.stack(constants, axis=-1)
+
+
+def _encode_time(time, shape):
+  """Encode hours since t0 to features."""
+  hours_per_year = int(365.25 * 24)
+  hour_of_year = time % hours_per_year
+  hour_of_day = time % 24
+  encoding = np.stack(
+      [
+          np.sin(2 * np.pi * hour_of_year / hours_per_year),
+          np.cos(2 * np.pi * hour_of_year / hours_per_year),
+          np.sin(2 * np.pi * hour_of_day / 24),
+          np.cos(2 * np.pi * hour_of_day / 24),
+      ],
+      axis=-1,
+  ).astype(np.float32)
+  return np.broadcast_to(encoding[None, None, :], shape + (4,))
+
+
+def _get_keisler22_idx_to_report(unroll_steps):
+  """Return unrolled indices of channels to report."""
+  variables = (
+      'geopotential@500',
+      'specific_humidity@700',
+      'temperature@850',
+      'u_component_of_wind@850',
+      'v_component_of_wind@850',
+  )
+  num_variables = 78  # 6 variables at 13 vertical levels.
+  idx = (7, 22, 36, 49, 62)
+
+  unrolled_variables = []
+  unrolled_idx = []
+  for v, i in zip(variables, idx):
+    unrolled_idx += [j * num_variables + i for j in range(unroll_steps)]
+    unrolled_variables += [f'{v}_step{j+1}' for j in range(unroll_steps)]
+
+  return variables, idx, unrolled_variables, unrolled_idx
 
 
 T = TypeVar('T')
