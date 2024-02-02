@@ -85,6 +85,70 @@ class WeatherSamplerTest(tf.test.TestCase, parameterized.TestCase):
 
     self.assertGreaterEqual(len(np.unique(all_ids)), min_valid_entries)
 
+  @parameterized.product(
+      offsets=[(0, 1)],
+      num_records=[43],
+      shard_count=[4],
+      worker_count=[1, 3, 5],
+      num_epochs=[2],
+  )
+  def test_sampler_with_data_loader(
+      self, offsets, num_records, shard_count, worker_count, num_epochs
+  ):
+    """Check that order is correct with WeatherSampler in grain.DataLoader."""
+    all_ids = []
+    range_data_source = grain.RangeDataSource(
+        start=0, stop=num_records - 1, step=1
+    )
+    for shard in range(shard_count):
+      shard_options = grain.ShardOptions(
+          shard_index=shard, shard_count=shard_count, drop_remainder=True
+      )
+
+      sampler = input_pipeline.WeatherSampler(
+          num_records=num_records,
+          num_epochs=num_epochs,
+          offsets=offsets,
+          worker_count=worker_count,
+          shard_options=shard_options,
+          shuffle=True,
+          seed=0,
+      )
+
+      read_options = grain.ReadOptions(prefetch_buffer_size=2, num_threads=2)
+      data_loader = grain.DataLoader(
+          data_source=range_data_source,
+          sampler=sampler,
+          worker_count=worker_count,
+          read_options=read_options,
+      )
+
+      ids = np.array([example for example in iter(data_loader)])
+
+      for worker in range(worker_count):
+        ids_worker = ids[worker::worker_count]
+        # Take only complete sequences.
+        ids_worker = ids_worker[
+            : len(ids_worker) // len(offsets) * len(offsets)
+        ]
+        sequences = np.split(ids_worker, len(ids_worker) // len(offsets))
+        # Check that every sequence has the right offsets.
+        for s in sequences:
+          self.assertAllEqual(np.diff(s), np.diff(offsets))
+
+        # Store all t0 ids to ensure coverage.
+        all_ids += [s[offsets.index(0)] for s in sequences]
+
+    entries_per_shard = num_records // shard_count
+    # Last entries cannot be used because of the sequence length.
+    valid_entries_per_shard = entries_per_shard - (offsets[-1] - offsets[0])
+    # Some entries might be missed if whole seq cannot be assigned to worker.
+    min_valid_entries = (
+        valid_entries_per_shard // worker_count * worker_count * shard_count
+    )
+
+    self.assertGreaterEqual(len(np.unique(all_ids)), min_valid_entries)
+
 
 if __name__ == "__main__":
   tf.test.main()
