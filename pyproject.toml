@@ -4,7 +4,10 @@
 name = "spherical_cnn"
 description = "JAX library for implementing spherical CNNs, accompanying the research paper Scaling Spherical CNNs, ICML'23."
 readme = "README.md"
-requires-python = ">=3.8"
+# TODO(machc) This uses a grain-nightly version that is compiled for
+# python 3.10. This can probably be relaxed once there is a proper
+# grain release.
+requires-python = "~=3.10"
 license = {file = "LICENSE"}
 authors = [{name = "spherical_cnn authors", email="spherical_cnn@google.com"}]
 classifiers = [  # List of https://pypi.org/classifiers/
@@ -28,6 +31,13 @@ dependencies = [
     "tensorflow==2.13.0",
     "tensorflow-datasets==4.9.2",
     "zipp==3.16.2",
+    # These are required for the weather experiments.
+    "dask==2024.1.0",
+    "gcsfs==2023.12.2.post1",
+    "grain-nightly==0.0.3",
+    "immutabledict==4.1.0",
+    "xarray==2023.1.0",
+    "zarr==2.16.1",
 ]
 
 # `version` is automatically set by flit to use `spherical_cnn.__version__`
