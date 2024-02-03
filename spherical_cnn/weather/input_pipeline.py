@@ -14,7 +14,7 @@
 
 """Input pipeline."""
 
-from typing import Optional, Sequence, TypeVar
+from typing import Any, Iterator, Optional, Sequence, TypeVar
 import grain.python as grain
 import numpy as np
 
@@ -89,6 +89,144 @@ def _get_keisler22_idx_to_report(unroll_steps):
   return variables, idx, unrolled_variables, unrolled_idx
 
 
+class WeatherBatchOperation(grain.BatchOperation):
+  """Custom batch operation for ERA5-based datasets.
+
+  We avoid using grain.Batch for efficiency. The dataset contains single
+  timestamp examples but we want sequences in a specific order
+  predictors/targets, as well as some pre-processing and including
+  constants. Doing all of this as a single operation is more efficient.
+  """
+
+  batch_size: int
+  metadata: Any
+
+  def __init__(self, batch_size, metadata):
+    super().__init__(batch_size)
+    self.metadata = metadata
+    self.num_times = len(metadata['offsets'])
+    self.num_predictor_times = metadata['offsets'].index(0) + 1
+    if self.num_predictor_times != 1:
+      raise NotImplementedError(
+          'Need to ensure correct ordering for unrolled predictions '
+          'with more than one time sample as input.'
+      )
+    self.num_target_times = self.num_times - self.num_predictor_times
+    self.target_fields = [
+        'geopotential',
+        'specific_humidity',
+        'temperature',
+        'u_component_of_wind',
+        'v_component_of_wind',
+        'vertical_velocity',
+    ]
+    # Solar radiation, orography, land_sea_mask, lat (1), long (2), and time
+    # features (4).
+    self.num_constant_channels = 10
+
+  def _init_batch(self, num_lat, num_lon, num_verticals):
+    num_predictor_channels = (
+        self.num_predictor_times * len(self.target_fields) * num_verticals
+        + self.num_constant_channels
+    )
+    num_target_channels = (
+        self.num_target_times * len(self.target_fields) * num_verticals
+    )
+
+    predictors = grain.SharedMemoryArray(
+        (self.batch_size, num_lat, num_lon, num_predictor_channels),
+        dtype=np.float32,
+    )
+    targets = grain.SharedMemoryArray(
+        (self.batch_size, num_lat, num_lon, num_target_channels),
+        dtype=np.float32,
+    )
+    times = grain.SharedMemoryArray((self.batch_size, self.num_times),
+                                    dtype=np.int64)
+
+    return predictors, targets, times
+
+  def __call__(
+      self, input_iterator: Iterator[grain.Record]
+  ) -> Iterator[grain.Record]:
+    time_i = 0
+    batch_i = 0
+    last_record_metadata = None
+    predictors, targets, times = [], [], []
+    id0, id1 = 0, 0
+    for input_record in input_iterator:
+      num_verticals, num_lon, num_lat = input_record.data[
+          self.target_fields[0]
+      ].shape
+      if time_i == 0 and batch_i == 0:
+        predictors, targets, times = self._init_batch(
+            num_lat, num_lon, num_verticals
+        )
+
+      times[batch_i, time_i] = input_record.data['time']
+
+      if time_i < self.num_predictor_times:
+        for i, field in enumerate(self.target_fields):
+          id0 = (
+              num_verticals * len(self.target_fields) * time_i
+              + num_verticals * i
+          )
+          id1 = id0 + num_verticals
+          predictors[batch_i, ..., id0:id1] = input_record.data[
+              field
+          ].transpose(2, 1, 0)
+        # Add constants last:
+        if time_i == self.num_predictor_times - 1:
+          id0 = id1
+          id1 = id0 + 1
+          # TODO(machc): This assumes only one time sample for predictors. If we
+          # want more than one we should take all samples of solar radiation and
+          # add at the end to play well with unrolling.
+          predictors[batch_i, ..., id0:id1] = input_record.data[
+              'toa_incident_solar_radiation'
+          ].transpose(2, 1, 0)
+          constants = _get_constants(self.metadata, with_longitude=True)
+          time_features = _encode_time(
+              input_record.data['time'], (num_lat, num_lon)
+          )
+          id0 = id1
+          id1 = id0 + constants.shape[-1]
+          predictors[batch_i, ..., id0:id1] = constants.transpose(1, 0, 2)
+          id0 = id1
+          id1 = id0 + time_features.shape[-1]
+          predictors[batch_i, ..., id0:id1] = time_features
+      else:
+        for i, field in enumerate(self.target_fields):
+          id0 = (
+              num_verticals
+              * len(self.target_fields)
+              * (time_i - self.num_predictor_times)
+              + num_verticals * i
+          )
+          id1 = id0 + num_verticals
+          targets[batch_i, ..., id0:id1] = input_record.data[field].transpose(
+              2, 1, 0
+          )
+
+      time_i += 1
+      if time_i == self.num_times:
+        batch_i += 1
+        time_i = 0
+
+      last_record_metadata = input_record.metadata
+      if batch_i == self.batch_size:
+        batch_i = 0
+        time_i = 0
+        if self._use_shared_memory:
+          batch = {
+              'predictors': predictors.metadata,
+              'targets': targets.metadata,
+              'times': times.metadata,
+          }
+        else:
+          batch = {'predictors': predictors, 'targets': targets, 'times': times}
+
+        yield grain.Record(last_record_metadata.remove_record_key(), batch)
 T = TypeVar('T')
 
 
