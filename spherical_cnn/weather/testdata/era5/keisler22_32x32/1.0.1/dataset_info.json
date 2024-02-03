@@ -1,0 +1,358 @@
+{
+  "citation": "@article{hersbach2020era5,\n  title={The ERA5 global reanalysis},\n  author={Hersbach, Hans and Bell, Bill and Berrisford, Paul and Hirahara, Shoji and Hor{\\'a}nyi, Andr{\\'a}s and Mu{\\~n}oz-Sabater, Joaqu{\\'\\i}n and Nicolas, Julien and Peubey, Carole and Radu, Raluca and Schepers, Dinand and others},\n  journal={Quarterly Journal of the Royal Meteorological Society},\n  volume={146},\n  number={730},\n  pages={1999--2049},\n  year={2020},\n  publisher={Wiley Online Library}\n}",
+  "configDescription": "Dataset following Keisler, Forecasting Global Weather with Graph\nNeural Networks, 2022.",
+  "configName": "keisler22_32x32",
+  "description": "Set of datasets for weather modeling constructed from ERA5 reanalysis data. The\ndata is on equiangular spherical grids and the source is at\n/namespace/gas/primary/whirl/datasets/era5/shoyer.",
+  "disableShuffling": true,
+  "fileFormat": "array_record",
+  "location": {
+    "urls": [
+      "https://www.ecmwf.int/en/forecasts/dataset/ecmwf-reanalysis-v5"
+    ]
+  },
+  "moduleName": "google3.research.geometric_ai.datasets.era5.era5",
+  "name": "era5",
+  "releaseNotes": {
+    "1.0.0": "Initial release.",
+    "1.0.1": "Added `toa_incident_solar_radiation` to Keisler datasets."
+  },
+  "splits": [
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1979",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1980",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1981",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1982",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1983",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1984",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1985",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1986",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1987",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1988",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1989",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1990",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1991",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1992",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1993",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1994",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1995",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1996",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1997",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1998",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "1999",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2000",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2001",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2002",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2003",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2004",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2005",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2006",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2007",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2008",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2009",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2010",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2011",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2012",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2013",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2014",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2015",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2016",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2017",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2018",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2019",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    },
+    {
+      "filepathTemplate": "{DATASET}-{SPLIT}.{FILEFORMAT}-{SHARD_X_OF_Y}",
+      "name": "2020",
+      "numBytes": "3238500",
+      "shardLengths": [
+        "10"
+      ]
+    }
+  ],
+  "version": "1.0.1"
+}

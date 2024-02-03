@@ -16,9 +16,49 @@
 
 from absl.testing import parameterized
 import grain.python as grain
+import ml_collections
 import numpy as np
 from spherical_cnn.weather import input_pipeline
 import tensorflow as tf
+import tensorflow_datasets as tfds
+
+
+class InputPipelineTest(tf.test.TestCase, parameterized.TestCase):
+
+  @parameterized.product(
+      batch_size=[1, 2],
+      lead_time=[6, 24],
+  )
+  def test_create_dataset_keisler22(self, lead_time, batch_size):
+    """Test that batch contents and shape are as expected."""
+
+    config = ml_collections.ConfigDict()
+    config.dataset = 'keisler22_32x32'
+    config.per_device_batch_size = batch_size
+    config.num_epochs = 1
+    config.lead_time = lead_time
+    config.worker_count = 0
+    config.prefetch_buffer_size = 1
+    # Number of threads per worker
+    config.num_threads = 1
+
+    # 78 (6 fields * 13 verticals) + 10 constants.
+    predictors_shape = (batch_size, 32, 32, 88)
+    targets_shape = (batch_size, 32, 32, 78 * lead_time // 6)
+
+    import os
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            'testdata')
+
+    with tfds.testing.mock_data(num_examples=100,
+                                data_dir=data_dir):
+      train_ds, eval_ds, test_ds, _, _ = (
+          input_pipeline.create_dataset_keisler22(config, seed=0))
+
+    for ds in [train_ds, eval_ds, test_ds]:
+      batch = next(iter(ds))
+      self.assertEqual(batch['predictors'].shape, predictors_shape)
+      self.assertEqual(batch['targets'].shape, targets_shape)
 
 
 class WeatherSamplerTest(tf.test.TestCase, parameterized.TestCase):
@@ -150,5 +190,5 @@ class WeatherSamplerTest(tf.test.TestCase, parameterized.TestCase):
     self.assertGreaterEqual(len(np.unique(all_ids)), min_valid_entries)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   tf.test.main()

@@ -1,0 +1,113 @@
+{
+    "featuresDict": {
+        "features": {
+            "geopotential": {
+                "pythonClassName": "tensorflow_datasets.core.features.tensor_feature.Tensor",
+                "tensor": {
+                    "dtype": "float32",
+                    "encoding": "none",
+                    "shape": {
+                        "dimensions": [
+                            "13",
+                            "32",
+                            "32"
+                        ]
+                    }
+                }
+            },
+            "specific_humidity": {
+                "pythonClassName": "tensorflow_datasets.core.features.tensor_feature.Tensor",
+                "tensor": {
+                    "dtype": "float32",
+                    "encoding": "none",
+                    "shape": {
+                        "dimensions": [
+                            "13",
+                            "32",
+                            "32"
+                        ]
+                    }
+                }
+            },
+            "temperature": {
+                "pythonClassName": "tensorflow_datasets.core.features.tensor_feature.Tensor",
+                "tensor": {
+                    "dtype": "float32",
+                    "encoding": "none",
+                    "shape": {
+                        "dimensions": [
+                            "13",
+                            "32",
+                            "32"
+                        ]
+                    }
+                }
+            },
+            "time": {
+                "pythonClassName": "tensorflow_datasets.core.features.scalar.Scalar",
+                "tensor": {
+                    "dtype": "int64",
+                    "encoding": "none",
+                    "shape": {}
+                }
+            },
+            "toa_incident_solar_radiation": {
+                "pythonClassName": "tensorflow_datasets.core.features.tensor_feature.Tensor",
+                "tensor": {
+                    "dtype": "float32",
+                    "encoding": "none",
+                    "shape": {
+                        "dimensions": [
+                            "1",
+                            "32",
+                            "32"
+                        ]
+                    }
+                }
+            },
+            "u_component_of_wind": {
+                "pythonClassName": "tensorflow_datasets.core.features.tensor_feature.Tensor",
+                "tensor": {
+                    "dtype": "float32",
+                    "encoding": "none",
+                    "shape": {
+                        "dimensions": [
+                            "13",
+                            "32",
+                            "32"
+                        ]
+                    }
+                }
+            },
+            "v_component_of_wind": {
+                "pythonClassName": "tensorflow_datasets.core.features.tensor_feature.Tensor",
+                "tensor": {
+                    "dtype": "float32",
+                    "encoding": "none",
+                    "shape": {
+                        "dimensions": [
+                            "13",
+                            "32",
+                            "32"
+                        ]
+                    }
+                }
+            },
+            "vertical_velocity": {
+                "pythonClassName": "tensorflow_datasets.core.features.tensor_feature.Tensor",
+                "tensor": {
+                    "dtype": "float32",
+                    "encoding": "none",
+                    "shape": {
+                        "dimensions": [
+                            "13",
+                            "32",
+                            "32"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "pythonClassName": "tensorflow_datasets.core.features.features_dict.FeaturesDict"
+}

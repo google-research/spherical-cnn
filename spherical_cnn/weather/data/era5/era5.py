@@ -58,7 +58,7 @@ ALL_LEVELS = (50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 850, 925, 1000)
 
 
 def _subsample_longitude_index(longitude):
-  if max(longitude) > 2*np.pi:
+  if max(longitude) <= 2*np.pi:
     raise ValueError('Expected longitude in degrees!')
   return np.linspace(0, 360, len(longitude)//2 + 1)[:-1]
 

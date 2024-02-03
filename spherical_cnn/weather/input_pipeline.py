@@ -14,9 +14,18 @@
 
 """Input pipeline."""
 
-from typing import Any, Iterator, Optional, Sequence, TypeVar
+from typing import Any, Callable, Dict, Iterator, Optional, Sequence, Tuple, TypeVar
 import grain.python as grain
+import jax
+import ml_collections
 import numpy as np
+from spherical_cnn.weather import input_pipeline_stats
+# This is needed to be able load the custom tfds dataset.
+import spherical_cnn.weather.data.era5  # pylint: disable=unused-import
+import tensorflow_datasets as tfds
+
+
+Dataset = grain.DataLoader
 
 
 def _get_constants(metadata, with_longitude=False):
@@ -227,6 +236,199 @@ class WeatherBatchOperation(grain.BatchOperation):
           batch = {'predictors': predictors, 'targets': targets, 'times': times}
 
         yield grain.Record(last_record_metadata.remove_record_key(), batch)
+
+
+def create_dataset_common(
+    dataset_name: str,
+    config: ml_collections.ConfigDict,
+    seed: int,
+    *,
+    offsets: Sequence[int],
+    train_split: str,
+    validation_split: str,
+    test_split: str,
+    make_operations: Callable[
+        [int, Dict[str, Any]], Sequence[grain.MapTransform]
+    ],
+    stats: Dict[str, np.ndarray],
+    spin1_idx: Optional[Dict[str, Sequence[int]]] = None,
+) -> Tuple[Dataset, Dataset, Dataset, Dict[str, Any], Dict[str, Any]]:
+  """Common loader for ERA5 variants.
+
+  Args:
+    dataset_name: Dataset name.
+    config: ConfigDict.
+    seed: Seed for random number generator.
+    offsets: Something like (-12, -6, 0, 72) will provide inputs at
+      t0-12h, t0-6h, t0 and targets at t0+72h when the data is sampled
+      hourly.
+    train_split: Train split to be passed to `tfds.data_source`.
+    validation_split: Validation split to be passed to `tfds.data_source`.
+    test_split: Test split to be passed to tfds.data_source.
+    make_operations: Function to return list of post-processing operations to be
+      run by grain.DataLoader.
+    stats: Dataset statistics to be added to `metadata['stats']`.
+    spin1_idx: Dict indicating which fields are to be treated as vector fields,
+      to be added to `metadata['spin1_idx']`.
+
+  Returns:
+    train/val/test data loaders and train/test metadata.
+  """
+
+  process_batch_size = jax.local_device_count() * config.per_device_batch_size
+
+  def make_dataset(split, num_epochs, shuffle):
+    # This contains "info".
+    source = tfds.data_source(
+        dataset_name,
+        split=split,
+    )
+    metadata = source.dataset_info.metadata
+    metadata = metadata if metadata is not None else {}
+    metadata['num_elements'] = len(source) - (offsets[-1] - offsets[0])
+    metadata['offsets'] = offsets
+
+    sampler = WeatherSampler(
+        num_records=len(source),
+        num_epochs=num_epochs,
+        offsets=offsets,
+        worker_count=config.worker_count,
+        shard_options=grain.ShardByJaxProcess(drop_remainder=True),
+        shuffle=shuffle,
+        seed=seed,
+    )
+
+    operations = make_operations(process_batch_size, metadata)
+
+    read_options = grain.ReadOptions(
+        prefetch_buffer_size=config.prefetch_buffer_size,
+        num_threads=config.num_threads,
+    )
+    data_loader = grain.DataLoader(
+        data_source=source,
+        sampler=sampler,
+        operations=operations,
+        worker_count=config.worker_count,
+        worker_buffer_size=1,
+        enable_profiling=False,
+        read_options=read_options,
+    )
+
+    return (data_loader, metadata)
+
+  train_dataset, metadata_train = make_dataset(
+      split=train_split, num_epochs=config.num_epochs, shuffle=True
+  )
+
+  metadata_train['stats'] = stats
+  metadata_train['spin1_idx'] = spin1_idx
+
+  # Validation data:
+  eval_dataset, _ = make_dataset(
+      split=validation_split, num_epochs=1, shuffle=False
+  )
+  # Test data:
+  test_dataset, metadata_test = make_dataset(
+      split=test_split, num_epochs=1, shuffle=False
+  )
+
+  return (
+      train_dataset,
+      eval_dataset,
+      test_dataset,
+      metadata_train,
+      metadata_test,
+  )
+
+
+def create_dataset_keisler22(
+    config: ml_collections.ConfigDict,
+    seed: int,
+) -> Tuple[Dataset, Dataset, Dataset, Dict[str, Any], Dict[str, Any]]:
+  """Create Keisler'22 data loader.
+
+  This follows the protocol from Keisler, Forecasting Global Weather
+  with Graph Neural Networks, arXiv'22.
+
+  Args:
+    config: ConfigDict.
+    seed: Seed for random number generator.
+
+  Returns:
+    train/val/test data loaders and train/test metadata.
+  """
+
+  # Data has 3h intervals and predicts 6h ahead with variable rollout, while
+  # lead_time is given in hours.
+  offsets = tuple(np.arange(0, config.lead_time // 3 + 1, 2))
+  unroll_steps = len(offsets) - 1
+
+  all_splits = set(range(1979, 2021))
+
+  # These are the Keisler settings
+  validation_split = set([1991, 2004, 2017])
+  test_split = set([2012, 2016, 2020])
+  train_split = '+'.join(
+      [str(year) for year in sorted(all_splits - validation_split - test_split)]
+  )
+  # Non-contiguous years might result in invalid sequences due to our indexing
+  # assumptions, so we use a single year for validation and test one year at a
+  # time.  Fig 6 in Keisler is over 2016. WB 2 evals are over 2020.
+  validation_split = '2017'
+  test_split = '2016'
+  # test_split = '2020'
+
+  # These are the GraphCast settings.
+  # validation_split = set([2019])
+  # test_split = set([2018, 2020])
+  # train_split = '+'.join([str(year) for year in
+  #                         sorted(all_splits - validation_split - test_split)])
+
+  def make_operations(process_batch_size, metadata):
+    return [WeatherBatchOperation(process_batch_size, metadata)]
+
+  # Make targets mean/stds according to # of offsets.
+  def unroll(x, num_unroll_steps):
+    return np.array(list(x) * num_unroll_steps, dtype=np.float32)
+
+  stats = input_pipeline_stats.KEISLER22_STATS
+  for key in [
+      'targets_mean',
+      'targets_std',
+      'differences_mean',
+      'differences_std',
+  ]:
+    stats[key] = unroll(stats[key], unroll_steps)
+
+  (train_dataset, eval_dataset, test_dataset, metadata, metadata_test) = (
+      create_dataset_common(
+          # Version 1.0.1 includes `toa_incident_solar_radiation`.
+          dataset_name=f'era5_gcs/{config.dataset}:1.0.1',
+          config=config,
+          seed=seed,
+          offsets=offsets,
+          train_split=train_split,
+          validation_split=validation_split,
+          test_split=test_split,
+          make_operations=make_operations,
+          stats=stats,
+          spin1_idx=input_pipeline_stats.KEISLER22_SPIN1_IDX,
+      )
+  )
+
+  # Add evaluation targets to metadata.
+  _, _, unrolled_variables, unrolled_idx = _get_keisler22_idx_to_report(
+      unroll_steps
+  )
+
+  metadata['metrics_idx'] = unrolled_idx
+  metadata['metrics_variables'] = unrolled_variables
+  # This is used to prune bad inputs due to missing years in the training data.
+  metadata['expected_time_deltas'] = 6
+
+  return train_dataset, eval_dataset, test_dataset, metadata, metadata_test
+
+
 T = TypeVar('T')
 
 
