@@ -23,8 +23,7 @@ for the longer configurations that reproduce the results in the paper.
 ```shell
 git clone https://github.com/google-research/spherical-cnn.git
 cd spherical-cnn
-# Create a docker container, download and install dependencies, download and
-# process the dataset.
+# Create a docker container, download and install dependencies.
 docker build -f dockerfile-qm9 -t spherical_cnn_qm9 .
 # Start training.
 docker run spherical_cnn_qm9 \

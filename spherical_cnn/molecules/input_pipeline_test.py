@@ -35,9 +35,7 @@ class InputPipelineTest(tf.test.TestCase, parameterized.TestCase):
     config.per_device_batch_size = batch_size
     config.molecule_to_sphere_method = 'gaussian'
 
-    with tfds.testing.mock_data(
-        num_examples=batch_size,
-    ):
+    with tfds.testing.mock_data(num_examples=batch_size):
       splits = input_pipeline.create_datasets(config, key)
 
     train_batch = iter(splits.train).next()

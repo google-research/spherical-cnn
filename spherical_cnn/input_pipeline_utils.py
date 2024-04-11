@@ -19,7 +19,6 @@ from typing import Dict, Callable, Optional, Union
 from clu import deterministic_data
 import jax
 import ml_collections
-import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -43,23 +42,15 @@ def create_eval_dataset(
     preprocess_fn: Optional[Callable[[Features], Features]] = None,
 ) -> tf.data.Dataset:
   """Create evaluation dataset (validation or test sets)."""
-  # This ensures the correct number of elements in the validation sets.
-  num_validation_examples = dataset_builder.info.splits[split].num_examples
-  eval_split = deterministic_data.get_read_instruction_for_host(
-      split, dataset_info=dataset_builder.info, drop_remainder=False
+  eval_split = tfds.split_for_jax_process(
+      split, drop_remainder=False
   )
 
-  eval_num_batches = None
   if config.eval_pad_last_batch:
-    # This is doing some extra work to get exactly all examples in the
-    # validation split. Without this the dataset would first be split between
-    # the different hosts and then into batches (both times dropping the
-    # remainder). If you don't mind dropping a few extra examples you can omit
-    # the `pad_up_to_batches` argument.
-    eval_batch_size = jax.local_device_count() * config.per_device_batch_size
-    eval_num_batches = int(
-        np.ceil(num_validation_examples / eval_batch_size / jax.process_count())
-    )
+    pad_up_to_batches = "auto"
+  else:
+    pad_up_to_batches = None
+
   return deterministic_data.create_dataset(
       dataset_builder,
       split=eval_split,
@@ -70,5 +61,5 @@ def create_eval_dataset(
       num_epochs=1,
       shuffle=False,
       preprocess_fn=preprocess_fn,
-      pad_up_to_batches=eval_num_batches,
+      pad_up_to_batches=pad_up_to_batches,
   )

@@ -127,8 +127,7 @@ def _create_train_dataset(
     batch_dims = [jax.local_device_count(),
                   config.per_device_batch_size]
     # Dataset can be split among hosts only when not doing per_batch_padding.
-    split = deterministic_data.get_read_instruction_for_host(
-        split, dataset_builder.info.splits[split].num_examples)
+    split = tfds.split_for_jax_process(split, drop_remainder=True)
 
   train_dataset = deterministic_data.create_dataset(
       dataset_builder,
@@ -151,11 +150,10 @@ def _preprocess_no_sphere(features: Features,
   """Returns QM7/QM9 atom positions/charges and molecule properties."""
   positions = features[positions_key]
   charges = features[charges_key]
-  target = features[regression_target]
-  # Following Cormorant (NeurIPS'19), we subtract the thermochemical energy for
-  # some targets. This happens on QM9 only.
-  target = target - tf.cast(
-      features.get(f'{regression_target}_thermo', 0.0), tf.float32)
+  # Use "atomization" targets if they exist. These have the
+  # thermochemical terms subtracted,
+  target = features.get(f'{regression_target}_atomization',
+                        features[regression_target])
 
   max_atoms = positions.shape[0]
   assert max_atoms == metadata['max_atoms'], 'Inconsistent `max_atoms`!'
@@ -171,26 +169,24 @@ def _create_dataset_qm9(
     config: ml_collections.ConfigDict,
     data_rng: jnp.ndarray) -> DatasetSplits:
   """Creates QM9 dataset. See create_datasets()."""
-  dataset_builder = tfds.builder('qm9')
-
   # Add metadata.
   # Example: for dataset == 'qm9/H', the regression target will be H (enthalpy).
   dataset, regression_target = config.dataset.split('/')
   # Cormorant, EGNN and others use 100k for training, 17,748 for validation
   # and 13,083 for test. We call this version 'qm9'.
   if dataset == 'qm9':
-    train_split_name = 'train'
-    test_split_name = 'test'
-    validation_split_name = 'validation'
+    dataset_builder = tfds.builder('qm9/cormorant')
   # TorchMD-Net, PaiNN and others use 110k for training, 10k for validation
   # and 10,831 for test. We call this version 'qm9+'.
   elif dataset == 'qm9+':
-    train_split_name = 'train + validation[:10_000]'
-    test_split_name = 'test[:10831]'
-    validation_split_name = 'validation[10_000:] + test[10831:]'
+    dataset_builder = tfds.builder('qm9/dimenet')
   else:
     raise ValueError('Unexpected `config.dataset`! '
                      'Expected format: qm9[+]/target.')
+
+  train_split_name = 'train'
+  test_split_name = 'test'
+  validation_split_name = 'validation'
 
   metadata = {
       'atom_types': QM9_METADATA['atom_types'],

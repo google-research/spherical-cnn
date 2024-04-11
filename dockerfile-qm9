@@ -16,7 +16,7 @@ COPY ./ /workdir/
 
 RUN python3 -m pip --no-cache-dir install .[dev]
 
-RUN python3 -m pip install --upgrade "jax[cuda11_pip]==0.4.14" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+RUN python3 -m pip install --upgrade "jaxlib==0.4.14+cuda11.cudnn86" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
 # Below command make 1000 UID and root user as owners of the workdir.
 RUN chown -R 1000:root /workdir && chmod -R 775 /workdir
@@ -24,5 +24,4 @@ RUN chown -R 1000:root /workdir && chmod -R 775 /workdir
 # Build dataset as user.
 USER 1000
 
-RUN cd /workdir/spherical_cnn/molecules/data/qm9 && tfds build qm9 && cd -
 ENTRYPOINT ["python3", "-m", "spherical_cnn.molecules.main"]
