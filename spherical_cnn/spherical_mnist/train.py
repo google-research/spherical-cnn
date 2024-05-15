@@ -196,7 +196,7 @@ def train_step(model: nn.Module, state: TrainState, optimizer: Optimizer,
         variables, batch["input"], mutable=["batch_stats"], train=True)
 
     loss = jnp.mean(cross_entropy_loss(logits=logits, labels=batch["label"]))
-    weight_penalty_params = jax.tree_leaves(variables["params"])
+    weight_penalty_params = jax.tree_util.tree_leaves(variables["params"])
     # NOTE(machc): jnp.abs is needed for this to work with complex weights.
     weight_l2 = sum(
         [jnp.sum(jnp.abs(x)**2) for x in weight_penalty_params if x.ndim > 1])
@@ -215,7 +215,7 @@ def train_step(model: nn.Module, state: TrainState, optimizer: Optimizer,
   # all gradients here in order to make gradient descent work seamlessly. This
   # is crucial if there are complex weights in the model, and makes no
   # difference for real weights. See https://github.com/google/jax/issues/4891.
-  grad = jax.tree_map(jnp.conj, grad)
+  grad = jax.tree_util.tree_map(jnp.conj, grad)
 
   updates, optimizer_state = optimizer.update(grad, state.optimizer_state)
   params = optax.apply_updates(state.params, updates)
@@ -303,7 +303,7 @@ def evaluate(model: nn.Module,
   eval_metrics = None
   with StepTraceContextHelper("eval", 0) as trace_annotation:
     for step, batch in enumerate(eval_ds):  # pytype: disable=wrong-arg-types
-      batch = jax.tree_map(np.asarray, batch)
+      batch = jax.tree_util.tree_map(np.asarray, batch)
       metrics_update = flax_utils.unreplicate(
           eval_step(model, state, batch))
       eval_metrics = (
@@ -370,7 +370,7 @@ def train_and_evaluate(config: ml_collections.ConfigDict, workdir: str):
 
   # Count number of trainable parameters. This must be done before replicating
   # the state to avoid double-counting replicated parameters.
-  param_count = sum(p.size for p in jax.tree_leaves(state.params))
+  param_count = sum(p.size for p in jax.tree_util.tree_leaves(state.params))
 
   # Distribute training over local devices.
   state = flax_utils.replicate(state)
@@ -408,7 +408,7 @@ def train_and_evaluate(config: ml_collections.ConfigDict, workdir: str):
       is_last_step = step == num_train_steps
 
       with jax.profiler.StepTraceAnnotation("train", step_num=step):
-        batch = jax.tree_map(np.asarray, next(train_iter))
+        batch = jax.tree_util.tree_map(np.asarray, next(train_iter))
         state, metrics_update = p_train_step(state=state, batch=batch)
         metric_update = flax_utils.unreplicate(metrics_update)
         train_metrics = (
