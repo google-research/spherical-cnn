@@ -34,7 +34,7 @@ dependencies = [
     "sympy==1.12",
     "tensorflow==2.13.0",
     "tensorflow-datasets==4.9.4",
-    "zipp==3.16.2",
+    "zipp==3.19.1",
     # These are required for the weather experiments.
     "dask==2024.1.0",
     "gcsfs==2023.12.2.post1",
