@@ -38,7 +38,7 @@ dependencies = [
     # These are required for the weather experiments.
     "dask==2024.1.0",
     "gcsfs==2023.12.2.post1",
-    "grain-nightly==0.0.3",
+    "grain==0.2.0",
     "immutabledict==4.1.0",
     "xarray==2023.1.0",
     "zarr==2.16.1",

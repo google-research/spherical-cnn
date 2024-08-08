@@ -432,7 +432,7 @@ def create_dataset_keisler22(
 T = TypeVar('T')
 
 
-class _ShuffleWeatherSampler(grain.experimental.lazy_dataset.LazyMapDataset[T]):
+class _ShuffleWeatherSampler(grain.MapDataset[T]):
   """Shuffles sets of consecutive observations.
 
   Attributes:
@@ -448,7 +448,7 @@ class _ShuffleWeatherSampler(grain.experimental.lazy_dataset.LazyMapDataset[T]):
 
   def __init__(
       self,
-      parent: grain.experimental.lazy_dataset.LazyMapDataset[T],
+      parent: grain.MapDataset[T],
       offsets: Sequence[int],
       worker_count: int,
       shuffle: bool,
