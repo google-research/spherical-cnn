@@ -123,7 +123,7 @@ class TrainTest(tf.test.TestCase, parameterized.TestCase):
 
     The spin-weighted model has complex weights, and the training loop
     explicitly conjugates all gradients in order to make backprop work. JAX will
-    possibly change this default (see https://github.com/google/jax/issues/4891)
+    possibly change this default (see https://github.com/jax-ml/jax/issues/4891)
     which may silently break our training. This checks if the convention is
     still the one we assume.
     """
