@@ -310,7 +310,7 @@ def train_step(model: nn.Module,
   # gradients of complex functions. They differ by a conjugate, so we conjugate
   # all gradients here in order to make gradient descent work seamlessly. This
   # is crucial if there are complex weights in the model, and makes no
-  # difference for real weights. See https://github.com/google/jax/issues/4891.
+  # difference for real weights. See https://github.com/jax-ml/jax/issues/4891.
   grad = jax.tree_util.tree_map(jnp.conj, grad)
 
   updates, optimizer_state = optimizer.update(grad, state.optimizer_state)
