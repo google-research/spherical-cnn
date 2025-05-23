@@ -194,6 +194,7 @@ class WeatherBatchOperation(grain.BatchOperation):
           predictors[batch_i, ..., id0:id1] = input_record.data[
               'toa_incident_solar_radiation'
           ].transpose(2, 1, 0)
+          # TODO new
           constants = _get_constants(self.metadata, with_longitude=True)
           time_features = _encode_time(
               input_record.data['time'], (num_lat, num_lon)
