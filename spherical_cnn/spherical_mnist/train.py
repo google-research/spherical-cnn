@@ -1,4 +1,4 @@
-# Copyright 2024 The spherical_cnn Authors.
+# Copyright 2025 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ def train_step(model: nn.Module, state: TrainState, optimizer: Optimizer,
   # gradients of complex functions. They differ by a conjugate, so we conjugate
   # all gradients here in order to make gradient descent work seamlessly. This
   # is crucial if there are complex weights in the model, and makes no
-  # difference for real weights. See https://github.com/jax-ml/jax/issues/4891.
+  # difference for real weights. See https://github.com/google/jax/issues/4891.
   grad = jax.tree_util.tree_map(jnp.conj, grad)
 
   updates, optimizer_state = optimizer.update(grad, state.optimizer_state)
