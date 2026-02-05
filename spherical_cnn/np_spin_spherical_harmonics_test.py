@@ -48,7 +48,11 @@ class NpSpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
   def test_spherical_harmonics_forward(self, width, ell, m):
     r"""SWSFT of Y_m^\ell has only one nonzero coefficient, at (ell, m)."""
     longitude_g, colatitude_g = sphere_utils.make_equiangular_grid(width)
-    sphere = scipy.special.sph_harm(m, ell, longitude_g, colatitude_g)
+    # Backwards compatibility with scipy < 1.17.
+    try:
+      sphere = scipy.special.sph_harm_y(ell, m, colatitude_g, longitude_g)
+    except AttributeError:
+      sphere = scipy.special.sph_harm(m, ell, longitude_g, colatitude_g)
     coeffs = np_spin_spherical_harmonics.swsft_forward_naive(sphere, 0)
     self._check_nonzero_harmonic_coeffs(coeffs, ell, m)
 
@@ -87,7 +91,11 @@ class NpSpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     sphere = np_spin_spherical_harmonics.swsft_backward_naive(coeffs, 0)
 
     phi_g, theta_g = sphere_utils.make_equiangular_grid(width)
-    sphere_gt = scipy.special.sph_harm(m, ell, phi_g, theta_g)
+    # Backwards compatibility with scipy < 1.17.
+    try:
+      sphere_gt = scipy.special.sph_harm_y(ell, m, theta_g, phi_g)
+    except AttributeError:
+      sphere_gt = scipy.special.sph_harm(m, ell, phi_g, theta_g)
 
     self.assertAllClose(sphere, sphere_gt)
 

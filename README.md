@@ -10,10 +10,6 @@ CNNs](https://arxiv.org/pdf/1711.06721)", ECCV'18.
 
 ## Experiments
 
-### Weather forecasting
-
-Coming soon!
-
 ### QM9
 
 Use the following instructions to launch a short training job on QM9/H. See
