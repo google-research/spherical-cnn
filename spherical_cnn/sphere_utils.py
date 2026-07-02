@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ def make_equiangular_grid(resolution: int) -> np.ndarray:
   """
   longitude = np.linspace(0, 2*np.pi, resolution, endpoint=False)
   colatitude = np.linspace(0, np.pi, resolution)
-  return np.meshgrid(longitude, colatitude)
+  return np.meshgrid(longitude, colatitude)  # pyrefly: ignore[bad-return]
 
 
 def sphere_quadrature_weights(resolution: int) -> jnp.ndarray:

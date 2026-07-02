@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ class SpinSphericalConvolution(nn.Module):
     # hence it doesn't make sense to have more parameters than num_ell.
     if self.num_filter_params > ell_max + 1:
       raise ValueError("num_filter_params must be <= ell_max + 1")
-    ell_in = jnp.linspace(0, 1, self.num_filter_params)
+    ell_in = jnp.linspace(0, 1, self.num_filter_params)  # pyrefly: ignore[no-matching-overload]
     ell_out = jnp.linspace(0, 1, ell_max + 1)
     # `vectorize` is over leading dimensions, so we put ell as the last
     # dimension and transpose it to the first later.
@@ -406,7 +406,7 @@ class PhaseCollapseNonlinearity(nn.Module):
         + nn.Dense(**dense_options)(abs_inputs)
     ) * 0.5
 
-    return inputs.at[..., [idx_zero], :].set(outputs_spin0)
+    return inputs.at[..., [idx_zero], :].set(outputs_spin0)  # pyrefly: ignore[missing-attribute]
 
 
 class SphericalPooling(nn.Module):
@@ -539,7 +539,7 @@ class SphericalBatchNormalization(nn.Module):
     if use_running_stats:
       variance = running_variance.value
       if self.centered:
-        mean = running_mean.value
+        mean = running_mean.value  # pyrefly: ignore[unbound-name]
     else:
       # Compute the spherical mean over the spherical grid dimensions, then a
       # conventional mean over the batch.
@@ -556,7 +556,7 @@ class SphericalBatchNormalization(nn.Module):
       # Aggregate means over devices.
       if self.axis_name is not None and not initializing:
         if self.centered:
-          mean = lax.pmean(mean, axis_name=self.axis_name)
+          mean = lax.pmean(mean, axis_name=self.axis_name)  # pyrefly: ignore[unbound-name]
         mean_abs_squared = lax.pmean(mean_abs_squared, axis_name=self.axis_name)
 
       # Imaginary part is negligible.
@@ -566,11 +566,11 @@ class SphericalBatchNormalization(nn.Module):
         running_variance.value = (self.momentum * running_variance.value +
                                   (1 - self.momentum) * variance)
         if self.centered:
-          running_mean.value = (self.momentum * running_mean.value +
-                                (1 - self.momentum) * mean)
+          running_mean.value = (self.momentum * running_mean.value +  # pyrefly: ignore[unbound-name]
+                                (1 - self.momentum) * mean)  # pyrefly: ignore[unbound-name]
 
     if self.centered:
-      outputs = inputs - mean.reshape(feature_shape)
+      outputs = inputs - mean.reshape(feature_shape)  # pyrefly: ignore[unbound-name]
     else:
       outputs = inputs
 
@@ -589,7 +589,7 @@ class SphericalBatchNormalization(nn.Module):
                         reduced_feature_shape).reshape(feature_shape)
       outputs = outputs + bias
 
-    return outputs
+    return outputs  # pyrefly: ignore[bad-return]
 
 
 def get_zero_nonzero_idx(spins: Sequence[int]) -> Tuple[int, Tuple[int, ...]]:
@@ -644,7 +644,7 @@ class SpinSphericalBatchNormalization(nn.Module):
 
     idx_zero, idx_nonzero = get_zero_nonzero_idx(self.spins)
     outputs = inputs
-    outputs = outputs.at[..., [idx_zero], :].set(
+    outputs = outputs.at[..., [idx_zero], :].set(  # pyrefly: ignore[missing-attribute]
         SphericalBatchNormalization(
             use_bias=True,
             centered=True,
@@ -772,7 +772,7 @@ class SpinSphericalBatchNormPhaseCollapse(BatchNormAndActivation):
 
     idx_zero, idx_nonzero = get_zero_nonzero_idx(self.spins)
     outputs = inputs
-    outputs = outputs.at[..., [idx_zero], :].set(
+    outputs = outputs.at[..., [idx_zero], :].set(  # pyrefly: ignore[missing-attribute]
         SphericalBatchNormalization(use_bias=True, centered=True, **options)(
             outputs[..., [idx_zero], :], weights=weights
         )
@@ -873,7 +873,7 @@ class SpinSphericalSpectralBatchNormalization(SpinSphericalBatchNormalization):
             self.momentum * running_mean.value + (1 - self.momentum) * mean
         )
 
-    outputs = inputs.at[:, 0].add(-mean)
+    outputs = inputs.at[:, 0].add(-mean)  # pyrefly: ignore[missing-attribute]
     factor = lax.rsqrt(variance.reshape(feature_shape) + self.epsilon)
     scale = self.param("scale", self.scale_init, reduced_feature_shape).reshape(
         feature_shape

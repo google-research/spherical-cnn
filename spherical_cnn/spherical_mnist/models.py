@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,8 +71,8 @@ class SpinSphericalClassifier(nn.Module):
       all_spins = functools.reduce(operator.concat, self.spins)
       self.transformer = (
           spin_spherical_harmonics.SpinSphericalFourierTransformer(
-              resolutions=np.unique(self.resolutions),
-              spins=np.unique(all_spins))
+              resolutions=np.unique(self.resolutions),  # pyrefly: ignore[bad-argument-type]
+              spins=np.unique(all_spins))  # pyrefly: ignore[bad-argument-type]
           )
     else:
       self.transformer = self.input_transformer

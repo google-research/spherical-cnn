@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class SpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     transformer, variables = _get_transformer()
     sphere = (jnp.linspace(-1, 1, resolution**2)
               .reshape((resolution, resolution)))
-    coeffs_np = np_spin_spherical_harmonics.swsft_forward_naive(sphere, spin)
+    coeffs_np = np_spin_spherical_harmonics.swsft_forward_naive(sphere, spin)  # pyrefly: ignore[bad-argument-type]
     coeffs_jax = transformer.apply(variables, sphere, spin,
                                    method=TransformerModule.swsft_forward)
 
@@ -102,7 +102,7 @@ class SpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     coeffs_np = (jnp.linspace(-1, 1, num_coefficients) +
                  1j*jnp.linspace(0, 1, num_coefficients))
     coeffs_jax = spin_spherical_harmonics.coefficients_to_matrix(coeffs_np)
-    sphere_np = np_spin_spherical_harmonics.swsft_backward_naive(coeffs_np,
+    sphere_np = np_spin_spherical_harmonics.swsft_backward_naive(coeffs_np,  # pyrefly: ignore[bad-argument-type]
                                                                  spin)
     sphere_jax = transformer.apply(variables, coeffs_jax, spin,
                                    method=TransformerModule.swsft_backward)
@@ -154,7 +154,7 @@ class SpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     n_channels = 2
     spins = (0, 1)
     shape = (resolution, resolution, len(spins), n_channels)
-    sphere_set = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)
+    sphere_set = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)  # pyrefly: ignore[no-matching-overload]
     coefficients = transformer.apply(
         variables, sphere_set, spins,
         method=TransformerModule.swsft_forward_spins_channels)
@@ -174,7 +174,7 @@ class SpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     n_channels = 2
     spins = (0, 1)
     shape = (resolution, resolution, len(spins), n_channels)
-    sphere_set = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)
+    sphere_set = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)  # pyrefly: ignore[no-matching-overload]
     coefficients = transformer.apply(
         variables, sphere_set, spins, ell_max=ell_max,
         method=TransformerModule.swsft_forward_spins_channels)
@@ -193,7 +193,7 @@ class SpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     n_channels = 2
     spins = (0, 1)
     shape = (resolution, resolution, len(spins), n_channels)
-    sphere_set = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)
+    sphere_set = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)  # pyrefly: ignore[no-matching-overload]
     coefficients = transformer.apply(
         variables, sphere_set, spins,
         method=TransformerModule.swsft_forward_spins_channels)
@@ -210,7 +210,7 @@ class SpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     n_channels = 2
     spins = (0, 1)
     shape = (ell_max+1, 2*ell_max+1, n_channels, len(spins))
-    coefficients = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)
+    coefficients = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)  # pyrefly: ignore[no-matching-overload]
     sphere = transformer.apply(
         variables, coefficients, spins,
         method=TransformerModule.swsft_backward_spins_channels)

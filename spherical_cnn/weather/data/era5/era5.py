@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -228,6 +228,6 @@ class Era5GCS(tfds.core.GeneratorBasedBuilder):
           # Expected dimensions are (vertical, long, lat).
           value = (values[i] if values[i].ndim == 3
                    else np.expand_dims(values[i], 0))
-          example[measurement] = value
+          example[measurement] = value  # pyrefly: ignore[bad-assignment]
 
         yield key, example

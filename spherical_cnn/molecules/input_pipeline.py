@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ def _create_train_dataset(
     batch_dims = [jax.local_device_count(),
                   config.per_device_batch_size]
     # Dataset can be split among hosts only when not doing per_batch_padding.
-    split = tfds.split_for_jax_process(split, drop_remainder=True)
+    split = tfds.split_for_jax_process(split, drop_remainder=True)  # pyrefly: ignore[bad-assignment]
 
   train_dataset = deterministic_data.create_dataset(
       dataset_builder,

@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ class SpinSphericalConvolutionTest(tf.test.TestCase, parameterized.TestCase):
     else:
       expected_shape = (batch_size, resolution, resolution,
                         len(spins_out), n_channels_out)
-    self.assertEqual(out.shape, expected_shape)
+    self.assertEqual(out.shape, expected_shape)  # pyrefly: ignore[missing-attribute]
 
   @parameterized.parameters(False, True)
   def test_equivariance(self, spectral_pooling):
@@ -330,12 +330,12 @@ class MagnitudeNonlinearityTest(tf.test.TestCase, parameterized.TestCase):
     bias = params["params"]["bias"].at[:].set(bias_value)
     params_changed = flax.core.FrozenDict({"params": {"bias": bias}})
     inputs_changed = model.apply(params_changed, inputs)
-    self.assertAllEqual(inputs_changed[:, small_row],
+    self.assertAllEqual(inputs_changed[:, small_row],  # pyrefly: ignore[bad-index]
                         np.zeros_like(inputs[:, small_row]))
     # All other rows have the bias added.
-    self.assertAllClose(inputs_changed[:, :small_row],
+    self.assertAllClose(inputs_changed[:, :small_row],  # pyrefly: ignore[bad-index]
                         inputs[:, :small_row] + bias_value)
-    self.assertAllClose(inputs_changed[:, small_row+1:],
+    self.assertAllClose(inputs_changed[:, small_row+1:],  # pyrefly: ignore[bad-index]
                         inputs[:, small_row+1:] + bias_value)
 
   @parameterized.parameters(1, 5)
@@ -413,7 +413,7 @@ class PhaseCollapseNonlinearityTest(tf.test.TestCase, parameterized.TestCase):
     params = model.init(rng, inputs)
     outputs = model.apply(params, inputs)
     self.assertEqual(
-        outputs.shape,
+        outputs.shape,  # pyrefly: ignore[missing-attribute]
         (batch_size, resolution, resolution, len(spins), num_channels),
     )
 
@@ -424,7 +424,7 @@ class PhaseCollapseNonlinearityTest(tf.test.TestCase, parameterized.TestCase):
     model = layers.PhaseCollapseNonlinearity(spins)
     batch_size, resolution, num_channels = 2, 8, 3
     input_shape = (batch_size, resolution, resolution, len(spins), num_channels)
-    inputs = jnp.linspace(-1.0, 2.0, np.prod(input_shape)) + 1j * jnp.linspace(
+    inputs = jnp.linspace(-1.0, 2.0, np.prod(input_shape)) + 1j * jnp.linspace(  # pyrefly: ignore[no-matching-overload]
         0.5, -1.0, np.prod(input_shape)
     )
     inputs = inputs.reshape(input_shape)
@@ -437,12 +437,12 @@ class PhaseCollapseNonlinearityTest(tf.test.TestCase, parameterized.TestCase):
 
     with self.subTest("Zero spin changes."):
       self.assertNotAllClose(
-          outputs[..., idx_zero, :], inputs[..., idx_zero, :]
+          outputs[..., idx_zero, :], inputs[..., idx_zero, :]  # pyrefly: ignore[bad-index]
       )
 
     with self.subTest("Nonzero spins do not change."):
       self.assertAllClose(
-          outputs[..., idx_nonzero, :], inputs[..., idx_nonzero, :]
+          outputs[..., idx_nonzero, :], inputs[..., idx_nonzero, :]  # pyrefly: ignore[bad-index]
       )
 
 
@@ -464,7 +464,7 @@ class SphericalPoolingTest(tf.test.TestCase, parameterized.TestCase):
     # Since both the area and the value in the second band are larger than the
     # first, the output values should be larger than the unweighted average.
     unweighted = (first_latitude + second_latitude) / 2
-    self.assertAllGreater(pooled[:, 0], unweighted)
+    self.assertAllGreater(pooled[:, 0], unweighted)  # pyrefly: ignore[bad-index]
 
     # Now we make the second value smaller, so average must be smaller than the
     # unweighted.
@@ -472,7 +472,7 @@ class SphericalPoolingTest(tf.test.TestCase, parameterized.TestCase):
     inputs = inputs.at[:, 1].set(second_latitude)
     unweighted = (first_latitude + second_latitude) / 2
     pooled = model.apply(params, inputs)
-    self.assertAllLess(pooled[:, 0], unweighted)
+    self.assertAllLess(pooled[:, 0], unweighted)  # pyrefly: ignore[bad-index]
 
   @parameterized.parameters(dict(shift=2, stride=2),
                             dict(shift=4, stride=2),
@@ -501,7 +501,7 @@ class SphericalPoolingTest(tf.test.TestCase, parameterized.TestCase):
     pooled = model.apply(params, inputs)
 
     # Tolerance here is higher because of slightly different quadratures.
-    self.assertAllClose(spherical_mean, pooled[:, 0, 0], atol=1e-3)
+    self.assertAllClose(spherical_mean, pooled[:, 0, 0], atol=1e-3)  # pyrefly: ignore[bad-index]
 
 
 def _batched_spherical_variance(inputs):
@@ -644,8 +644,8 @@ class SpinSphericalSpectralBatchNormalizationTest(
     )
     # Ensure mean zero for spin 0 so spatial matches spectral:
     sphere_mean = sphere_utils.spin_spherical_mean(sphere[..., [0], :])
-    sphere = sphere.at[..., [0], :].add(-jnp.expand_dims(sphere_mean, (1, 2)))
-    coefficients = coefficients.at[:, 0].set(0.0)
+    sphere = sphere.at[..., [0], :].add(-jnp.expand_dims(sphere_mean, (1, 2)))  # pyrefly: ignore[missing-attribute]
+    coefficients = coefficients.at[:, 0].set(0.0)  # pyrefly: ignore[missing-attribute]
 
     key = jax.random.PRNGKey(0)
 
@@ -725,7 +725,7 @@ class SpinSphericalBlockTest(tf.test.TestCase, parameterized.TestCase):
                  resolution // downsampling_factor,
                  len(spins_out), num_channels)
 
-    self.assertEqual(outputs.shape, shape_out)
+    self.assertEqual(outputs.shape, shape_out)  # pyrefly: ignore[missing-attribute]
 
   @parameterized.parameters(
       dict(shift=1, train=False),
@@ -851,7 +851,7 @@ class SpinSphericalResidualBlockTest(tf.test.TestCase, parameterized.TestCase):
 
     outputs = model.apply(params, inputs, train=False)
     self.assertEqual(
-        outputs.shape,
+        outputs.shape,  # pyrefly: ignore[missing-attribute]
         (
             batch_size,
             resolution // downsampling_factor,

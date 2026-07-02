@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ class AtomTypeEmbeddingTest(tf.test.TestCase, parameterized.TestCase):
 
     with self.subTest('Zero embeddings'):
       # With the default zero init, outputs don't change.
-      self.assertAllClose(outputs_zero, jnp.zeros_like(outputs_zero))
+      self.assertAllClose(outputs_zero, jnp.zeros_like(outputs_zero))  # pyrefly: ignore[bad-argument-type]
     with self.subTest('Nonzero embedding'):
       self.assertAllClose(outputs_nonzero, expected_outputs)
 
@@ -112,7 +112,7 @@ class AtomFeatureAggregationTest(tf.test.TestCase, parameterized.TestCase):
     num_channels = 4
     atom_types = tuple(range(5))
     shape = (batch_size, num_atoms, num_channels)
-    inputs = jnp.linspace(0, 1, np.prod(shape)).reshape(shape)
+    inputs = jnp.linspace(0, 1, np.prod(shape)).reshape(shape)  # pyrefly: ignore[no-matching-overload]
     charges = (np.random.randint(max(atom_types), size=batch_size * num_atoms)
                .reshape([batch_size, num_atoms]))
     positions = (jnp.linspace(-1, 1, batch_size * num_atoms * 3)
@@ -124,7 +124,7 @@ class AtomFeatureAggregationTest(tf.test.TestCase, parameterized.TestCase):
     params = model.init(rng, inputs, charges, positions)
     outputs = model.apply(params, inputs, charges, positions)
 
-    self.assertEqual(outputs.shape, (batch_size, num_channels))
+    self.assertEqual(outputs.shape, (batch_size, num_channels))  # pyrefly: ignore[missing-attribute]
 
 
 class SpinSphericalRegressorTest(tf.test.TestCase, parameterized.TestCase):
@@ -212,7 +212,7 @@ class SpinSphericalRegressorTest(tf.test.TestCase, parameterized.TestCase):
     with self.subTest('Eval'):
       outputs = model.apply(params, inputs, charges,
                             train=False, positions=None)
-      self.assertEqual(outputs.shape, (batch_size,))
+      self.assertEqual(outputs.shape, (batch_size,))  # pyrefly: ignore[missing-attribute]
     with self.subTest('Train'):
       outputs, _ = model.apply(params, inputs, charges,
                                train=True, positions=None,
@@ -388,7 +388,7 @@ class SpinSphericalRegressorFromPositionsTest(tf.test.TestCase,
 
     with self.subTest('Eval'):
       outputs = model.apply(params, inputs, charges, train=False)
-      self.assertEqual(outputs.shape, (batch_size,))
+      self.assertEqual(outputs.shape, (batch_size,))  # pyrefly: ignore[missing-attribute]
     with self.subTest('Train'):
       outputs, _ = model.apply(params, inputs, charges, train=True,
                                mutable=['batch_stats'],

@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ def main(argv):
   platform.work_unit().create_artifact(platform.ArtifactType.DIRECTORY,
                                        _WORKDIR.value, "workdir")
 
-  train.train_and_evaluate(FLAGS.config, _WORKDIR.value)
+  train.train_and_evaluate(FLAGS.config, _WORKDIR.value)  # pyrefly: ignore[bad-argument-type]
 
 
 if __name__ == "__main__":

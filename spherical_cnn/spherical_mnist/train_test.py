@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ class TrainTest(tf.test.TestCase, parameterized.TestCase):
     assert n in (1, 2), f"Expected 1 or 2 devices, got {n}."
     # Dimensions : [1, devices, batch_size, ...] - first dim consumed by the
     # function .from_tensor_slices().
-    eval_ds = tf.data.Dataset.from_tensor_slices(dict(
+    eval_ds = tf.data.Dataset.from_tensor_slices(dict(  # pyrefly: ignore[bad-argument-type]
         input=tf.zeros(shape=(1, n, 2 // n, 8, 8, 1, 1)),
         label=tf.reshape(tf.constant([0, 9]), (1, n, 2 // n)),
     ))

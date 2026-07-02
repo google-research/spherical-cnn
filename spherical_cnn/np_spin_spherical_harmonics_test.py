@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ class NpSpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     n_coeffs = (width//2)**2
     coeffs = np.zeros(n_coeffs, dtype='complex128')
     coeffs[np_spin_spherical_harmonics._get_swsft_coeff_index(ell, m)] = 1
-    sphere = np_spin_spherical_harmonics.swsft_backward_naive(coeffs, 0)
+    sphere = np_spin_spherical_harmonics.swsft_backward_naive(coeffs, 0)  # pyrefly: ignore[bad-argument-type]
 
     phi_g, theta_g = sphere_utils.make_equiangular_grid(width)
     # Backwards compatibility with scipy < 1.17.
@@ -109,7 +109,7 @@ class NpSpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     coeffs_gt = np.linspace(-1, 1, n_coeffs) + 1j*np.linspace(0, 1, n_coeffs)
     # Coefficients for ell < abs(spin) are always zero.
     coeffs_gt[:spin**2] = 0
-    sphere = np_spin_spherical_harmonics.swsft_backward_naive(coeffs_gt, spin)
+    sphere = np_spin_spherical_harmonics.swsft_backward_naive(coeffs_gt, spin)  # pyrefly: ignore[bad-argument-type]
     coeffs = np_spin_spherical_harmonics.swsft_forward_naive(sphere, spin)
     self.assertAllClose(coeffs, coeffs_gt)
 
@@ -123,10 +123,10 @@ class NpSpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     sphere_gt = np.linspace(-1, 1, width**2).reshape((width, width))
     # This effectively bandlimits the spherical function.
     sphere_gt = np_spin_spherical_harmonics.swsft_backward_naive(
-        np_spin_spherical_harmonics.swsft_forward_naive(sphere_gt, spin), spin)
+        np_spin_spherical_harmonics.swsft_forward_naive(sphere_gt, spin), spin)  # pyrefly: ignore[bad-argument-type]
 
     coeffs = np_spin_spherical_harmonics.swsft_forward_naive(sphere_gt, spin)
-    sphere = np_spin_spherical_harmonics.swsft_backward_naive(coeffs, spin)
+    sphere = np_spin_spherical_harmonics.swsft_backward_naive(coeffs, spin)  # pyrefly: ignore[bad-argument-type]
     self.assertAllClose(sphere, sphere_gt)
 
 

@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ def create_train_state(
   """
   config.spins = tuple([tuple(s) for s in config.spins])
   # We pass metadata as FrozenDict because nn.Module must be hashable.
-  metadata = nn.FrozenDict(metadata)
+  metadata = nn.FrozenDict(metadata)  # pyrefly: ignore[bad-assignment]
   # Use of getattr could simplify this but is discouraged by the style guide. We
   # should consider using it anyway if sequence of ifs grows too big.
   model_options = dict(
@@ -107,9 +107,9 @@ def create_train_state(
   else:
     model_fun = models.SpinSphericalRegressor
   if config.model_name == "spin_spherical_regressor":
-    model = model_fun(**model_options, residual=False)
+    model = model_fun(**model_options, residual=False)  # pyrefly: ignore[bad-argument-type]
   elif config.model_name == "spin_spherical_residual_regressor":
-    model = model_fun(**model_options, residual=True)
+    model = model_fun(**model_options, residual=True)  # pyrefly: ignore[bad-argument-type]
   else:
     raise ValueError(f"Model {config.model_name} not supported.")
 
@@ -141,17 +141,17 @@ def create_train_state(
 
 @flax.struct.dataclass
 class EvalMetrics(metrics.Collection):
-  eval_loss: metrics.Average.from_output("loss")
-  eval_mean_squared_error: metrics.Average.from_output("mean_squared_error")
-  eval_mean_absolute_error: metrics.Average.from_output("mean_absolute_error")
+  eval_loss: metrics.Average.from_output("loss")  # pyrefly: ignore[invalid-annotation]
+  eval_mean_squared_error: metrics.Average.from_output("mean_squared_error")  # pyrefly: ignore[invalid-annotation]
+  eval_mean_absolute_error: metrics.Average.from_output("mean_absolute_error")  # pyrefly: ignore[invalid-annotation]
 
 
 @flax.struct.dataclass
 class TrainMetrics(metrics.Collection):
-  loss: metrics.Average.from_output("loss")
-  mean_squared_error: metrics.Average.from_output("mean_squared_error")
-  mean_absolute_error: metrics.Average.from_output("mean_absolute_error")
-  loss_std: metrics.Std.from_output("loss")
+  loss: metrics.Average.from_output("loss")  # pyrefly: ignore[invalid-annotation]
+  mean_squared_error: metrics.Average.from_output("mean_squared_error")  # pyrefly: ignore[invalid-annotation]
+  mean_absolute_error: metrics.Average.from_output("mean_absolute_error")  # pyrefly: ignore[invalid-annotation]
+  loss_std: metrics.Std.from_output("loss")  # pyrefly: ignore[invalid-annotation]
 
 
 def cosine_decay(lr: float, step: float, total_steps: int):
@@ -374,7 +374,7 @@ def eval_step(model: nn.Module, state: TrainState,
   else:
     inputs = (batch["positions"], batch["charges"])
   outputs = model.apply(
-      variables, *inputs, mutable=False, train=False)
+      variables, *inputs, mutable=False, train=False)  # pyrefly: ignore[bad-argument-type]
 
   normalized_labels = _normalize(
       batch["label"],
@@ -389,7 +389,7 @@ def eval_step(model: nn.Module, state: TrainState,
   # Eval batches can be zero-padded so normalization may cause NaNs. Zero-padded
   # entries will be ignored by `metrics.Average` according to batch['mask'], so
   # we avoid averaging over the batch dimension here.
-  loss = _compute_loss(outputs, normalized_labels,
+  loss = _compute_loss(outputs, normalized_labels,  # pyrefly: ignore[bad-argument-type]
                        loss_type=loss_type,
                        average_over_batch=False)
   mean_squared_error, mean_absolute_error = _compute_metrics(
@@ -473,7 +473,7 @@ def evaluate(model: nn.Module,
     logging.info("Saving %s...", filename)
     with tf.io.gfile.GFile(filename, "wb") as outfile:
       io_buffer = io.BytesIO()
-      np.savez_compressed(io_buffer, **outputs)
+      np.savez_compressed(io_buffer, **outputs)  # pyrefly: ignore[bad-argument-type]
       outfile.write(io_buffer.getvalue())
 
   return eval_metrics

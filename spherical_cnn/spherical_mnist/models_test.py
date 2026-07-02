@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class SpinSphericalClassifierTest(tf.test.TestCase, parameterized.TestCase):
     params = model.init(jax.random.PRNGKey(0), inputs, train=False)
     outputs = model.apply(params, inputs, train=False)
 
-    self.assertEqual(outputs.shape, (batch_size, num_classes))
+    self.assertEqual(outputs.shape, (batch_size, num_classes))  # pyrefly: ignore[missing-attribute]
 
   @parameterized.parameters(2, 4)
   def test_azimuthal_invariance(self, shift):
@@ -132,11 +132,11 @@ class CNNClassifierTest(tf.test.TestCase, parameterized.TestCase):
                                  axis_name=None)
     resolution = resolutions[0]
     shape = [batch_size, resolution, resolution, 1, channels[0]]
-    inputs = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)
+    inputs = jnp.linspace(-1, 1, np.prod(shape)).reshape(shape)  # pyrefly: ignore[no-matching-overload]
     params = model.init(jax.random.PRNGKey(0), inputs, train=False)
     outputs = model.apply(params, inputs, train=False)
 
-    self.assertEqual(outputs.shape, (batch_size, num_classes))
+    self.assertEqual(outputs.shape, (batch_size, num_classes))  # pyrefly: ignore[missing-attribute]
 
 if __name__ == '__main__':
   tf.test.main()

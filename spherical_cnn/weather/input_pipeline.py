@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ class WeatherBatchOperation(grain.BatchOperation):
             num_lat, num_lon, num_verticals
         )
 
-      times[batch_i, time_i] = input_record.data['time']
+      times[batch_i, time_i] = input_record.data['time']  # pyrefly: ignore[unsupported-operation]
 
       if time_i < self.num_predictor_times:
         for i, field in enumerate(self.target_fields):
@@ -181,7 +181,7 @@ class WeatherBatchOperation(grain.BatchOperation):
               + num_verticals * i
           )
           id1 = id0 + num_verticals
-          predictors[batch_i, ..., id0:id1] = input_record.data[
+          predictors[batch_i, ..., id0:id1] = input_record.data[  # pyrefly: ignore[unsupported-operation]
               field
           ].transpose(2, 1, 0)
         # Add constants last:
@@ -191,7 +191,7 @@ class WeatherBatchOperation(grain.BatchOperation):
           # TODO(machc): This assumes only one time sample for predictors. If we
           # want more than one we should take all samples of solar radiation and
           # add at the end to play well with unrolling.
-          predictors[batch_i, ..., id0:id1] = input_record.data[
+          predictors[batch_i, ..., id0:id1] = input_record.data[  # pyrefly: ignore[unsupported-operation]
               'toa_incident_solar_radiation'
           ].transpose(2, 1, 0)
           constants = _get_constants(self.metadata, with_longitude=True)
@@ -200,10 +200,10 @@ class WeatherBatchOperation(grain.BatchOperation):
           )
           id0 = id1
           id1 = id0 + constants.shape[-1]
-          predictors[batch_i, ..., id0:id1] = constants.transpose(1, 0, 2)
+          predictors[batch_i, ..., id0:id1] = constants.transpose(1, 0, 2)  # pyrefly: ignore[unsupported-operation]
           id0 = id1
           id1 = id0 + time_features.shape[-1]
-          predictors[batch_i, ..., id0:id1] = time_features
+          predictors[batch_i, ..., id0:id1] = time_features  # pyrefly: ignore[unsupported-operation]
       else:
         for i, field in enumerate(self.target_fields):
           id0 = (
@@ -213,7 +213,7 @@ class WeatherBatchOperation(grain.BatchOperation):
               + num_verticals * i
           )
           id1 = id0 + num_verticals
-          targets[batch_i, ..., id0:id1] = input_record.data[field].transpose(
+          targets[batch_i, ..., id0:id1] = input_record.data[field].transpose(  # pyrefly: ignore[unsupported-operation]
               2, 1, 0
           )
 
@@ -228,9 +228,9 @@ class WeatherBatchOperation(grain.BatchOperation):
         time_i = 0
         if self._use_shared_memory:
           batch = {
-              'predictors': predictors.metadata,
-              'targets': targets.metadata,
-              'times': times.metadata,
+              'predictors': predictors.metadata,  # pyrefly: ignore[missing-attribute]
+              'targets': targets.metadata,  # pyrefly: ignore[missing-attribute]
+              'times': times.metadata,  # pyrefly: ignore[missing-attribute]
           }
         else:
           batch = {'predictors': predictors, 'targets': targets, 'times': times}
@@ -412,7 +412,7 @@ def create_dataset_keisler22(
           test_split=test_split,
           make_operations=make_operations,
           stats=stats,
-          spin1_idx=input_pipeline_stats.KEISLER22_SPIN1_IDX,
+          spin1_idx=input_pipeline_stats.KEISLER22_SPIN1_IDX,  # pyrefly: ignore[bad-argument-type]
       )
   )
 
@@ -548,5 +548,5 @@ class WeatherSampler(grain.IndexSampler):
         self._offsets,
         shuffle=shuffle,
         worker_count=worker_count,
-        seed=seed,
+        seed=seed,  # pyrefly: ignore[bad-argument-type]
     )

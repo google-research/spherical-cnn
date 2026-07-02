@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ def _spin_mean_real(features: Array, spins: Sequence[int]) -> jnp.ndarray:
   # Taking the `abs` here is a design decision. Using the real part or
   # concatenating real and imaginary parts are also reasonable for spin == 0.
   mean = jnp.abs(sphere_utils.spin_spherical_mean(features))
-  spins = einshape.einshape('s->1s1', jnp.array(spins))
+  spins = einshape.einshape('s->1s1', jnp.array(spins))  # pyrefly: ignore[bad-assignment]
   return jnp.where(spins == 0, mean, mean_abs)
 
 
@@ -576,8 +576,8 @@ class SpinSphericalRegressor(nn.Module):
       all_spins = functools.reduce(operator.concat, self.spins)
       self.transformer = (spin_spherical_harmonics.
                           SpinSphericalFourierTransformer(
-                              resolutions=np.unique(self.resolutions),
-                              spins=np.unique(all_spins)))
+                              resolutions=np.unique(self.resolutions),  # pyrefly: ignore[bad-argument-type]
+                              spins=np.unique(all_spins)))  # pyrefly: ignore[bad-argument-type]
     else:
       self.transformer = self.input_transformer
 
@@ -648,8 +648,8 @@ class SpinSphericalRegressor(nn.Module):
           dropout_rate=self.dropout_rate,
           attention_dropout_rate=self.attention_dropout_rate)
 
-    self.tail = tail(
-        spins=spins_out,
+    self.tail = tail(  # pyrefly: ignore[unbound-name]
+        spins=spins_out,  # pyrefly: ignore[unbound-name]
         atom_types=self.metadata['atom_types'],
         max_atoms=self.metadata['max_atoms'],
         use_atom_type_embedding=self.use_atom_type_embedding,
@@ -758,7 +758,7 @@ def _molecule_to_sphere_gaussian(
   if rotation_augmentation:
     # This samples from O(3), not SO(3). The properties we are interested are
     # invariant to reflections so O(3) should be better.
-    random_rotation = _random_orthogonal(random_seed, 3)
+    random_rotation = _random_orthogonal(random_seed, 3)  # pyrefly: ignore[bad-argument-type]
     coordinates = jnp.matmul(coordinates, random_rotation, precision='high')
 
   num_atoms = len(coordinates)
@@ -790,7 +790,7 @@ def _molecule_to_sphere_gaussian(
        for distance_power in distance_powers]).astype(np.float32)
 
   # Interactions of the form k1 k2 / r^x.
-  pairwise_charges = jnp.outer(charges, charges).astype(jnp.float32)
+  pairwise_charges = jnp.outer(charges, charges).astype(jnp.float32)  # pyrefly: ignore[bad-argument-type]
   pairwise_interactions = (jnp.expand_dims(pairwise_charges, 2) *
                            distance_factors /
                            np.expand_dims(max_values, (0, 1)))

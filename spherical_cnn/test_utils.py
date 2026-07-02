@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ def get_rotated_pair(
   batched_backward_transform = jax.vmap(backward_transform, in_axes=(0, None))
   rotated_sphere = batched_backward_transform(rotated_coefficients, spins)
 
-  return RotatedPair(coefficients, sphere,
+  return RotatedPair(coefficients, sphere,  # pyrefly: ignore[bad-argument-type]
                      rotated_coefficients, rotated_sphere)
 
 
@@ -291,7 +291,7 @@ def apply_model_to_azimuthally_rotated_pairs(
   stride = resolution // output.shape[1]
   output = jnp.roll(output, shift // stride, axis=2)
 
-  return output, rotated_output
+  return output, rotated_output  # pyrefly: ignore[bad-return]
 
 
 def mean_absolute_error(x, y):

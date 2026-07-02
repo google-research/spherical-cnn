@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -113,15 +113,15 @@ def cross_entropy_loss(*, logits, labels):
 @flax.struct.dataclass
 class EvalMetrics(metrics.Collection):
   accuracy: metrics.Accuracy
-  eval_loss: metrics.Average.from_output("loss")
+  eval_loss: metrics.Average.from_output("loss")  # pyrefly: ignore[invalid-annotation]
 
 
 @flax.struct.dataclass
 class TrainMetrics(metrics.Collection):
   train_accuracy: metrics.Accuracy
-  learning_rate: metrics.LastValue.from_output("learning_rate")
-  loss: metrics.Average.from_output("loss")
-  loss_std: metrics.Std.from_output("loss")
+  learning_rate: metrics.LastValue.from_output("learning_rate")  # pyrefly: ignore[invalid-annotation]
+  loss: metrics.Average.from_output("loss")  # pyrefly: ignore[invalid-annotation]
+  loss_std: metrics.Std.from_output("loss")  # pyrefly: ignore[invalid-annotation]
 
 
 def cosine_decay(lr: float, step: float, total_steps: int):
@@ -256,7 +256,7 @@ def eval_step(model: nn.Module, state: TrainState,
       "batch_stats": state.batch_stats,
       "constants": state.constants,
   }
-  logits = model.apply(variables, batch["input"], mutable=False, train=False)
+  logits = model.apply(variables, batch["input"], mutable=False, train=False)  # pyrefly: ignore[bad-argument-type]
   loss = jnp.mean(cross_entropy_loss(logits=logits, labels=batch["label"]))
   return EvalMetrics.gather_from_model_output(
       logits=logits,

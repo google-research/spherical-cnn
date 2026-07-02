@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ class TestUtilsTest(tf.test.TestCase, parameterized.TestCase):
     spins = jnp.arange(num_spins)
     pair = test_utils.get_rotated_pair(transformer,  # pytype: disable=wrong-arg-types  # jnp-type
                                        shape,
-                                       spins,
+                                       spins,  # pyrefly: ignore[bad-argument-type]
                                        1.0, 2.0, 3.0)
     self.assertEqual(pair.sphere.shape, shape)
     self.assertEqual(pair.rotated_sphere.shape, shape)

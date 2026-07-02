@@ -1,4 +1,4 @@
-# Copyright 2025 The spherical_cnn Authors.
+# Copyright 2026 The spherical_cnn Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ class SphericalMnist(tfds.core.GeneratorBasedBuilder):
                          path: str,
                          split: str) -> Iterable[Tuple[int, Dict[str, Any]]]:
     """Dataset generator. See superclass method for details."""
-    dataset = tf.data.TFRecordDataset(path, compression_type='GZIP')
+    dataset = tf.data.TFRecordDataset(path, compression_type='GZIP')  # pyrefly: ignore[bad-instantiation]
 
     for image_id, datapoint in enumerate(dataset):
       # The validation set is obtained from train, but we must make sure the ids
