@@ -406,7 +406,7 @@ def create_dataset_keisler22(
           dataset_name=f'era5_gcs/{config.dataset}:1.0.1',
           config=config,
           seed=seed,
-          offsets=offsets,
+          offsets=offsets,  # pyrefly: ignore[bad-argument-type]
           train_split=train_split,
           validation_split=validation_split,
           test_split=test_split,
@@ -541,7 +541,7 @@ class WeatherSampler(grain.IndexSampler):
     )
     self._offsets = offsets
     self._num_epochs = len(offsets) * num_epochs
-    self._max_index *= len(offsets)
+    self._max_index *= len(offsets)  # pyrefly: ignore[unsupported-operation]
     # Initial `_record_keys` is a ShardLazyDataset; we shuffle it.
     self._record_keys = _ShuffleWeatherSampler(
         self._record_keys,
