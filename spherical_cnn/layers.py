@@ -319,7 +319,7 @@ class MagnitudeNonlinearity(nn.Module):
     epsilon: Small float constant to avoid division by zero.
     bias_initializer: initializer for the bias (default to zeroes).
   """
-  epsilon: jnp.float32 = 1e-6
+  epsilon: jnp.float32 = 1e-6  # pyrefly: ignore[not-a-type]
   bias_initializer: Initializer = nn.initializers.zeros
 
   @nn.compact
@@ -345,7 +345,7 @@ class MagnitudeNonlinearityLeakyRelu(nn.Module):
     bias_initializer: initializer for the spin != 0 bias (default to zeroes).
   """
   spins: Sequence[int]
-  epsilon: jnp.float32 = 1e-6
+  epsilon: jnp.float32 = 1e-6  # pyrefly: ignore[not-a-type]
   bias_initializer: Initializer = nn.initializers.zeros
 
   @nn.compact
