@@ -391,7 +391,7 @@ def create_dataset_keisler22(
   def unroll(x, num_unroll_steps):
     return np.array(list(x) * num_unroll_steps, dtype=np.float32)
 
-  stats = input_pipeline_stats.KEISLER22_STATS
+  stats = input_pipeline_stats.KEISLER22_STATS.copy()
   for key in [
       'targets_mean',
       'targets_std',
