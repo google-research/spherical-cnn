@@ -94,7 +94,7 @@ def create_train_state(config: ml_collections.ConfigDict, rng: np.ndarray,
   abs_if_complex = lambda x: jnp.abs(x) if x.dtype == jnp.complex64 else x
   parameter_overview.log_parameter_overview(
       jax.tree_util.tree_map(abs_if_complex, params))
-  optimizer = optax.adam(learning_rate_schedule)  # pytype: disable=wrong-arg-types  # numpy-scalars
+  optimizer = optax.adam(learning_rate_schedule)  # pyrefly: ignore[bad-argument-type]
   optimizer_state = optimizer.init(params)
 
   return model, optimizer, TrainState(step=0,
@@ -219,7 +219,7 @@ def train_step(model: nn.Module, state: TrainState, optimizer: Optimizer,
 
   updates, optimizer_state = optimizer.update(grad, state.optimizer_state)
   params = optax.apply_updates(state.params, updates)
-  new_state = state.replace(  # pytype: disable=attribute-error
+  new_state = state.replace(  # pyrefly: ignore[missing-attribute]
       step=step,
       optimizer_state=optimizer_state,
       params=params,
@@ -302,7 +302,7 @@ def evaluate(model: nn.Module,
   logging.info("Starting evaluation.")
   eval_metrics = None
   with StepTraceContextHelper("eval", 0) as trace_annotation:
-    for step, batch in enumerate(eval_ds):  # pytype: disable=wrong-arg-types
+    for step, batch in enumerate(eval_ds):
       batch = jax.tree_util.tree_map(np.asarray, batch)
       metrics_update = flax_utils.unreplicate(
           eval_step(model, state, batch))
@@ -332,7 +332,7 @@ def train_and_evaluate(config: ml_collections.ConfigDict, workdir: str):
   data_rng = jax.random.fold_in(data_rng, jax.process_index())
   splits = input_pipeline.create_datasets(config, data_rng)
   num_classes = splits.info.features["label"].num_classes
-  train_iter = iter(splits.train)  # pytype: disable=wrong-arg-types
+  train_iter = iter(splits.train)
 
   # Learning rate schedule.
   num_train_steps = config.num_train_steps

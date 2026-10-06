@@ -406,7 +406,7 @@ def create_dataset_keisler22(
           dataset_name=f'era5_gcs/{config.dataset}:1.0.1',
           config=config,
           seed=seed,
-          offsets=offsets,  # pyrefly: ignore[bad-argument-type]
+          offsets=offsets,
           train_split=train_split,
           validation_split=validation_split,
           test_split=test_split,

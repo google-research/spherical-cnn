@@ -64,7 +64,7 @@ def _create_dataset_tiny_dummy(
   shape = (size, resolution, resolution, n_spins, n_channels)
   entries = np.linspace(-1, 1, np.prod(shape), dtype=np.float32).reshape(shape)
   labels = np.resize(np.arange(num_classes), [size])
-  train_dataset = tf.data.Dataset.from_tensor_slices({"input": entries,  # pyrefly: ignore[bad-argument-type]
+  train_dataset = tf.data.Dataset.from_tensor_slices({"input": entries,
                                                       "label": labels})
   train_dataset = train_dataset.batch(config.per_device_batch_size,
                                       drop_remainder=True)

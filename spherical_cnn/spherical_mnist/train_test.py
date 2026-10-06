@@ -69,7 +69,7 @@ class TrainTest(tf.test.TestCase, parameterized.TestCase):
     assert n in (1, 2), f"Expected 1 or 2 devices, got {n}."
     # Dimensions : [1, devices, batch_size, ...] - first dim consumed by the
     # function .from_tensor_slices().
-    eval_ds = tf.data.Dataset.from_tensor_slices(dict(  # pyrefly: ignore[bad-argument-type]
+    eval_ds = tf.data.Dataset.from_tensor_slices(dict(
         input=tf.zeros(shape=(1, n, 2 // n, 8, 8, 1, 1)),
         label=tf.reshape(tf.constant([0, 9]), (1, n, 2 // n)),
     ))
@@ -91,10 +91,10 @@ class TrainTest(tf.test.TestCase, parameterized.TestCase):
     model.apply.side_effect = logits
 
     # Disable type checking of the mock object.
-    eval_metrics = train.evaluate(model, MockedState(), eval_ds)  # pytype: disable=wrong-arg-types
+    eval_metrics = train.evaluate(model, MockedState(), eval_ds)  # pyrefly: ignore[bad-argument-type]
     self.assertIsNotNone(eval_metrics)
     # Disable pytype because we just asserted that eval_metrics is not None.
-    metrics = eval_metrics.compute()   # pytype: disable=attribute-error
+    metrics = eval_metrics.compute()
     logging.info("eval_metrics: %s", metrics)
     self.assertAllClose(
         {"accuracy": 0.5, "eval_loss": 4.9586296},

@@ -103,14 +103,14 @@ class SphericalMnist(tfds.core.GeneratorBasedBuilder):
         'validation_canonical': dataset_directory / 'nrnr/train0.tfrecord',
         'test_canonical': dataset_directory / 'nrnr/test0.tfrecord'}
 
-    return {split: self._generate_examples(filename, split)  # pytype: disable=wrong-arg-types  # always-use-return-annotations
+    return {split: self._generate_examples(filename, split)  # pyrefly: ignore[bad-argument-type]
             for split, filename in dataset_files.items()}
 
   def _generate_examples(self,
                          path: str,
                          split: str) -> Iterable[Tuple[int, Dict[str, Any]]]:
     """Dataset generator. See superclass method for details."""
-    dataset = tf.data.TFRecordDataset(path, compression_type='GZIP')  # pyrefly: ignore[bad-instantiation]
+    dataset = tf.data.TFRecordDataset(path, compression_type='GZIP')
 
     for image_id, datapoint in enumerate(dataset):
       # The validation set is obtained from train, but we must make sure the ids

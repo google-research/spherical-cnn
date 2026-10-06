@@ -109,7 +109,7 @@ class NpSpinSphericalHarmonicsTest(tf.test.TestCase, parameterized.TestCase):
     coeffs_gt = np.linspace(-1, 1, n_coeffs) + 1j*np.linspace(0, 1, n_coeffs)
     # Coefficients for ell < abs(spin) are always zero.
     coeffs_gt[:spin**2] = 0
-    sphere = np_spin_spherical_harmonics.swsft_backward_naive(coeffs_gt, spin)  # pyrefly: ignore[bad-argument-type]
+    sphere = np_spin_spherical_harmonics.swsft_backward_naive(coeffs_gt, spin)
     coeffs = np_spin_spherical_harmonics.swsft_forward_naive(sphere, spin)
     self.assertAllClose(coeffs, coeffs_gt)
 
