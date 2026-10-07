@@ -356,7 +356,7 @@ def train_and_evaluate(config: ml_collections.ConfigDict, workdir: str):
   rng, model_rng = jax.random.split(rng)
   model, optimizer, state = create_train_state(
       config,
-      model_rng,
+      model_rng,  # pyrefly: ignore[bad-argument-type]
       input_shape=splits.train.element_spec["input"].shape[1:],
       num_classes=num_classes,
       learning_rate_schedule=learning_rate_fn)
